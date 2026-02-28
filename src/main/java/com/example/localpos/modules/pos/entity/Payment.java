@@ -1,5 +1,7 @@
 package com.example.localpos.modules.pos.entity;
 
+import com.example.localpos.enums.PaymentMethod;
+import com.example.localpos.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,20 +32,20 @@ public class Payment {
     @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
-    @Lob
+
     @Column(name = "payment_method", nullable = false)
-    private String paymentMethod;
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod;
 
     @Column(name = "transaction_ref", length = 100)
     private String transactionRef;
 
-    @ColumnDefault("'PENDING'")
-    @Lob
     @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status = PaymentStatus.PENDING;
 
     @Lob
-    @Column(name = "payment_payload")
+    @Column(name = "payment_payload", columnDefinition = "text")
     private String paymentPayload;
 
     @ColumnDefault("CURRENT_TIMESTAMP")

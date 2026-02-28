@@ -33,7 +33,7 @@ public class Category {
     private String slug;
 
     @Lob
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
     @ColumnDefault("CURRENT_TIMESTAMP")

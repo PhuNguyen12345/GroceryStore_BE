@@ -1,5 +1,6 @@
 package com.example.localpos.modules.crm.entity;
 
+import com.example.localpos.enums.DiscountType;
 import com.example.localpos.modules.pos.entity.Order;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -41,10 +42,9 @@ public class Voucher {
     @Column(name = "description")
     private String description;
 
-    @ColumnDefault("'FIXED_AMOUNT'")
-    @Lob
     @Column(name = "discount_type", nullable = false)
-    private String discountType;
+    @Enumerated(EnumType.STRING)
+    private DiscountType discountType = DiscountType.FIXED_AMOUNT;
 
     @Column(name = "discount_value", nullable = false, precision = 15, scale = 2)
     private BigDecimal discountValue;

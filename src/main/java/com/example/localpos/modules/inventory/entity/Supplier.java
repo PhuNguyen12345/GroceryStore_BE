@@ -26,8 +26,7 @@ public class Supplier {
     @Column(name = "phone", length = 15)
     private String phone;
 
-    @Lob
-    @Column(name = "address")
+    @Column(name = "address", columnDefinition = "text")
     private String address;
 
     @OneToMany(mappedBy = "supplier")

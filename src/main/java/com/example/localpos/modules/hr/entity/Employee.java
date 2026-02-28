@@ -1,5 +1,6 @@
 package com.example.localpos.modules.hr.entity;
 
+import com.example.localpos.enums.EmployeeRole;
 import com.example.localpos.modules.inventory.entity.InventoryTransaction;
 import com.example.localpos.modules.pos.entity.Order;
 import jakarta.persistence.*;
@@ -40,9 +41,9 @@ public class Employee {
     private String phone;
 
     @ColumnDefault("'CASHIER'")
-    @Lob
-    @Column(name = "role", nullable = false)
-    private String role;
+    @Column(name = "role", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    private EmployeeRole role;
 
     @ColumnDefault("1")
     @Column(name = "is_active")

@@ -20,8 +20,7 @@ public class Warehouse {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Lob
-    @Column(name = "address")
+    @Column(name = "address", columnDefinition = "text")
     private String address;
 
     @OneToMany(mappedBy = "warehouse")

@@ -23,7 +23,7 @@ public class Brand {
     private String name;
 
     @Lob
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
     @ColumnDefault("CURRENT_TIMESTAMP")

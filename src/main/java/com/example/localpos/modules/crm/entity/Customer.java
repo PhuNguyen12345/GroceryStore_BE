@@ -1,5 +1,6 @@
 package com.example.localpos.modules.crm.entity;
 
+import com.example.localpos.enums.CustomerTier;
 import com.example.localpos.modules.pos.entity.Order;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -32,17 +33,16 @@ public class Customer {
     private String email;
 
     @Lob
-    @Column(name = "address")
+    @Column(name = "address", columnDefinition = "text")
     private String address;
 
     @ColumnDefault("0")
     @Column(name = "loyalty_points")
     private Integer loyaltyPoints;
 
-    @ColumnDefault("'BRONZE'")
-    @Lob
-    @Column(name = "customer_tier")
-    private String customerTier;
+    @Column(name = "customer_tier", length = 20)
+    @Enumerated(EnumType.STRING)
+    private CustomerTier customerTier = CustomerTier.BRONZE;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")

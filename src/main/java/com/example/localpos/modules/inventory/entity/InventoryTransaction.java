@@ -1,5 +1,6 @@
 package com.example.localpos.modules.inventory.entity;
 
+import com.example.localpos.enums.InventoryTransactionType;
 import com.example.localpos.modules.hr.entity.Employee;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -20,16 +21,16 @@ public class InventoryTransaction {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Lob
     @Column(name = "transaction_type", nullable = false)
-    private String transactionType;
+    @Enumerated(EnumType.STRING)
+    private InventoryTransactionType transactionType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
     private Employee employee;
 
     @Lob
-    @Column(name = "note")
+    @Column(name = "note", columnDefinition = "text")
     private String note;
 
     @ColumnDefault("CURRENT_TIMESTAMP")

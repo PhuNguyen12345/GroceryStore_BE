@@ -1,5 +1,7 @@
 package com.example.localpos.modules.pos.entity;
 
+import com.example.localpos.enums.OrderStatus;
+import com.example.localpos.enums.PaymentMethod;
 import com.example.localpos.modules.crm.entity.Customer;
 import com.example.localpos.modules.crm.entity.Voucher;
 import com.example.localpos.modules.hr.entity.Employee;
@@ -48,15 +50,13 @@ public class Order {
     @Column(name = "final_amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal finalAmount;
 
-    @ColumnDefault("'CASH'")
-    @Lob
     @Column(name = "payment_method")
-    private String paymentMethod;
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod = PaymentMethod.CASH;
 
-    @ColumnDefault("'COMPLETED'")
-    @Lob
     @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status =  OrderStatus.PENDING;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
