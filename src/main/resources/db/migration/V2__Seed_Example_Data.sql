@@ -1,0 +1,33 @@
+-- -- ==========================================================================
+-- -- SEED DATA (DỮ LIỆU MẪU ĐỂ TEST)
+-- -- ==========================================================================
+--
+-- -- 1. Tạo Admin (Pass: 123456)
+-- INSERT INTO employees (username, password_hash, full_name, role)
+-- VALUES ('admin', '$2a$10$N.zmdr9k7uOCQb376yxeOLcQpRxhHT.0.Zq.r9/W.k/T/g/G.2y', 'Phu Admin', 'ADMIN');
+--
+-- -- 2. Tạo Danh mục & Sản phẩm
+-- INSERT INTO categories (name, slug) VALUES ('Nước giải khát', 'nuoc-giai-khat');
+-- SET @cat_id = LAST_INSERT_ID();
+--
+-- INSERT INTO products (name, category_id, brand) VALUES ('Coca Cola', @cat_id, 'Coca-Cola');
+-- SET @prod_id = LAST_INSERT_ID();
+--
+-- -- 3. Tạo Đơn vị tính (1 Lon và 1 Thùng 24)
+-- INSERT INTO product_units (product_id, unit_name, conversion_factor, selling_price, barcode, is_base_unit)
+-- VALUES
+--     (@prod_id, 'Lon', 1, 10000, '8930001', 1),
+--     (@prod_id, 'Thùng 24', 24, 230000, '8930024', 0);
+--
+-- -- 4. Tạo Kho & Nhập lô hàng (Batch)
+-- INSERT INTO warehouses (name) VALUES ('Kho Tổng');
+-- SET @wh_id = LAST_INSERT_ID();
+-- SET @unit_thung_id = (SELECT id FROM product_units WHERE barcode = '8930024');
+--
+-- -- Nhập 10 thùng, Hết hạn ngày 30/12/2026
+-- INSERT INTO inventory_batches (product_unit_id, warehouse_id, batch_code, expiry_date, quantity_available, import_price)
+-- VALUES (@unit_thung_id, @wh_id, 'BATCH-001', '2026-12-30', 10, 180000);
+--
+-- -- 5. Tạo Khách hàng (Không pass)
+-- INSERT INTO customers (phone, full_name, loyalty_points)
+-- VALUES ('0987654321', 'Nguyen Van A', 50);
