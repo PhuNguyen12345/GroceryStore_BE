@@ -1,6 +1,6 @@
 package com.example.localpos.modules.inventory.dto.response;
 
-import com.example.localpos.common.PageResponse;
+import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.modules.inventory.entity.Supplier;
 import lombok.*;
 
@@ -15,4 +15,5 @@ public class SupplierResponse {
     private String contactPerson;
     private String phone;
     private String address;
+    private boolean isActive;
 }
