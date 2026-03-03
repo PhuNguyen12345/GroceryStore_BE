@@ -50,7 +50,6 @@ public class SupplierServiceImpl implements SupplierService {
     @Override
     public SupplierResponse addSupplier(SupplierRequest supplierRequest) {
         SupplierResponse supplierResponse = new SupplierResponse();
-        supplierResponse.
         return null;
     }
 }
