@@ -1,4 +1,4 @@
-package com.example.localpos.common;
+package com.example.localpos.common.response;
 
 import lombok.*;
 
