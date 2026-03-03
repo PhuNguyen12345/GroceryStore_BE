@@ -6,8 +6,12 @@ import lombok.*;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SupplierResponse extends PageResponse<Supplier> {
+public class SupplierResponse {
+    private Long id;
+    private String name;
+    private String contactPerson;
+    private String phone;
+    private String address;
 }
