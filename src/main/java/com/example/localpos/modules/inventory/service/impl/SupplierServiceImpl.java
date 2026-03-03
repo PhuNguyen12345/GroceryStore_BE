@@ -1,11 +1,15 @@
 package com.example.localpos.modules.inventory.service.impl;
 
 import com.example.localpos.common.response.PageResponse;
-import com.example.localpos.modules.inventory.dto.request.SupplierRequest;
-import com.example.localpos.modules.inventory.dto.response.SupplierResponse;
+import com.example.localpos.modules.inventory.dto.supplier.request.SupplierCreateRequest;
+import com.example.localpos.modules.inventory.dto.supplier.request.SupplierRequest;
+import com.example.localpos.modules.inventory.dto.supplier.request.SupplierUpdateRequest;
+import com.example.localpos.modules.inventory.dto.supplier.response.SupplierResponse;
 import com.example.localpos.modules.inventory.entity.Supplier;
+import com.example.localpos.modules.inventory.mapper.SupplierCreateRequestMapper;
 import com.example.localpos.modules.inventory.mapper.SupplierRequestMapper;
 import com.example.localpos.modules.inventory.mapper.SupplierResponseMapper;
+import com.example.localpos.modules.inventory.mapper.SupplierUpdateRequestMapper;
 import com.example.localpos.modules.inventory.repository.SupplierRepository;
 import com.example.localpos.modules.inventory.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +25,14 @@ import java.util.List;
 public class SupplierServiceImpl implements SupplierService {
 
     private final SupplierRepository supplierRepository;
-    private final SupplierRequestMapper supplierRequestMapper;
+    private final SupplierCreateRequestMapper createRequestMapper;
+    private final SupplierUpdateRequestMapper updateRequestMapper;
     private final SupplierResponseMapper supplierResponseMapper;
 
-    public SupplierServiceImpl(SupplierRepository supplierRepository,  SupplierRequestMapper supplierRequestMapper, SupplierResponseMapper supplierResponseMapper) {
+    public SupplierServiceImpl(SupplierRepository supplierRepository, SupplierCreateRequestMapper createRequestMapper, SupplierUpdateRequestMapper updateRequestMapper,SupplierResponseMapper supplierResponseMapper) {
         this.supplierRepository = supplierRepository;
-        this.supplierRequestMapper = supplierRequestMapper;
+        this.createRequestMapper = createRequestMapper;
+        this.updateRequestMapper = updateRequestMapper;
         this.supplierResponseMapper = supplierResponseMapper;
     }
 
@@ -57,9 +63,9 @@ public class SupplierServiceImpl implements SupplierService {
     }
 
     @Override
-    public SupplierResponse addSupplier(SupplierRequest supplierRequest) {
+    public SupplierResponse addSupplier(SupplierCreateRequest supplierRequest) {
         //Map request to entity
-        Supplier s = supplierRequestMapper.toEntity(supplierRequest);
+        Supplier s = createRequestMapper.toEntity(supplierRequest);
         //log supplier entity to check data
         System.out.println( "Request supplier: " + s.toString());
         //save s into db
@@ -74,13 +80,13 @@ public class SupplierServiceImpl implements SupplierService {
     }
 
     @Override
-    public SupplierResponse updateSupplier(Long id, SupplierRequest supplierRequest) {
+    public SupplierResponse updateSupplier(Long id, SupplierUpdateRequest supplierRequest) {
         //find supplier by id
         Supplier existingSupplier = supplierRepository.findById(id).orElseThrow(() -> new RuntimeException("Supplier with id " + id + " not found"));
         //log supplier found by id
         log.info("Found supplier: {}", existingSupplier);
         //update from request mapper
-        supplierRequestMapper.updateEntity(existingSupplier, supplierRequest);
+        updateRequestMapper.updateEntity(existingSupplier, supplierRequest);
         //log supplier after ignore null from mapper
         log.info("Supplier with updating fields: {}", existingSupplier);
         //save supplier
