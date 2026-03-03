@@ -1,5 +1,7 @@
 package com.example.localpos.modules.inventory.dto.response;
 
+import com.example.localpos.common.PageResponse;
+import com.example.localpos.modules.inventory.entity.Supplier;
 import lombok.*;
 
 @Getter
@@ -7,9 +9,5 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SupplierResponse {
-    private String name;
-    private String contactPerson;
-    private String phone;
-    private String address;
+public class SupplierResponse extends PageResponse<Supplier> {
 }
