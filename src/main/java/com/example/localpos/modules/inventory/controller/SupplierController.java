@@ -6,9 +6,9 @@ import com.example.localpos.modules.inventory.dto.response.SupplierResponse;
 import com.example.localpos.modules.inventory.service.SupplierService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.example.localpos.common.constants.ApiPaths;
 @RestController
-@RequestMapping("api/suppliers")
+@RequestMapping(ApiPaths.InventoryCtrl.SUPPLIER)
 public class SupplierController {
     private final SupplierService supplierService;
 
