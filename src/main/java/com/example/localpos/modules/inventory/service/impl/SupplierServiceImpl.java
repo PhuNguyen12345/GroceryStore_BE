@@ -1,6 +1,7 @@
 package com.example.localpos.modules.inventory.service.impl;
 
 import com.example.localpos.common.PageResponse;
+import com.example.localpos.modules.inventory.dto.request.SupplierRequest;
 import com.example.localpos.modules.inventory.dto.response.SupplierResponse;
 import com.example.localpos.modules.inventory.entity.Supplier;
 import com.example.localpos.modules.inventory.repository.SupplierRepository;
@@ -8,9 +9,11 @@ import com.example.localpos.modules.inventory.service.SupplierService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class SupplierServiceImpl implements SupplierService {
 
     private SupplierRepository supplierRepository;
@@ -42,5 +45,12 @@ public class SupplierServiceImpl implements SupplierService {
                 .totalElements(supplierPage.getTotalElements())
                 .totalPages(supplierPage.getTotalPages())
                 .build();
+    }
+
+    @Override
+    public SupplierResponse addSupplier(SupplierRequest supplierRequest) {
+        SupplierResponse supplierResponse = new SupplierResponse();
+        supplierResponse.
+        return null;
     }
 }
