@@ -51,6 +51,9 @@ public class ProductUnit {
     @Column(name = "is_base_unit")
     private Boolean isBaseUnit;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @OneToMany(mappedBy = "productUnit")
     private Set<InventoryBatch> inventoryBatches = new LinkedHashSet<>();
 
