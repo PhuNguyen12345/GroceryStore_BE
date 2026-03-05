@@ -9,6 +9,8 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
+@Builder
 public class SupplierRequest {
     @NotBlank(message = "Tên nhà cung cấp không được để trống")
     @Size(max = 150, message = "Tên nhà cung cấp không được vượt quá 150 ký tự.")

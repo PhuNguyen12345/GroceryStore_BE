@@ -3,15 +3,14 @@ package com.example.localpos.modules.inventory.dto.supplier.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
+@Builder
 public class SupplierCreateRequest {
     @NotBlank(message = "Tên nhà cung cấp không được để trống")
     @Size(max = 150, message = "Tên nhà cung cấp không được vượt quá 150 ký tự.")

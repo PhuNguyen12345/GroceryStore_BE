@@ -1,4 +1,4 @@
-package com.example.localpos.modules.inventory.mapper;
+package com.example.localpos.modules.inventory.mapper.supplier;
 
 import com.example.localpos.mapper.BaseMapper;
 import com.example.localpos.modules.inventory.dto.supplier.request.SupplierCreateRequest;

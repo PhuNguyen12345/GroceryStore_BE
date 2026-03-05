@@ -6,10 +6,9 @@ import com.example.localpos.modules.inventory.dto.supplier.request.SupplierReque
 import com.example.localpos.modules.inventory.dto.supplier.request.SupplierUpdateRequest;
 import com.example.localpos.modules.inventory.dto.supplier.response.SupplierResponse;
 import com.example.localpos.modules.inventory.entity.Supplier;
-import com.example.localpos.modules.inventory.mapper.SupplierCreateRequestMapper;
-import com.example.localpos.modules.inventory.mapper.SupplierRequestMapper;
-import com.example.localpos.modules.inventory.mapper.SupplierResponseMapper;
-import com.example.localpos.modules.inventory.mapper.SupplierUpdateRequestMapper;
+import com.example.localpos.modules.inventory.mapper.supplier.SupplierCreateRequestMapper;
+import com.example.localpos.modules.inventory.mapper.supplier.SupplierResponseMapper;
+import com.example.localpos.modules.inventory.mapper.supplier.SupplierUpdateRequestMapper;
 import com.example.localpos.modules.inventory.repository.SupplierRepository;
 import com.example.localpos.modules.inventory.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
