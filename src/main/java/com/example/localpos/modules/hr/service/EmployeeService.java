@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface EmployeeService {
 
-    // ── CRUD ────────────────────────────────────────────────────────────────
+    // CRUD
 
     EmployeeResponseDTO create(EmployeeRequestDTO request);
 
@@ -19,7 +19,7 @@ public interface EmployeeService {
 
     void delete(Long id);
 
-    // ── Single-record lookups ────────────────────────────────────────────────
+    // Single-record lookups
 
     EmployeeResponseDTO findById(Long id);
 
@@ -27,7 +27,7 @@ public interface EmployeeService {
 
     EmployeeResponseDTO findByEmail(String email);
 
-    // ── List / search ────────────────────────────────────────────────────────
+    // List / search
 
     List<EmployeeResponseDTO> findAll();
 
@@ -47,13 +47,13 @@ public interface EmployeeService {
 
     List<EmployeeResponseDTO> findByIsActive(Boolean isActive);
 
-    // ── Status helpers ───────────────────────────────────────────────────────
+    //Status helpers
 
     EmployeeResponseDTO activate(Long id);
 
     EmployeeResponseDTO deactivate(Long id);
 
-    // ── Statistics ───────────────────────────────────────────────────────────
+    // Statistics
 
     long countByRole(EmployeeRole role);
 

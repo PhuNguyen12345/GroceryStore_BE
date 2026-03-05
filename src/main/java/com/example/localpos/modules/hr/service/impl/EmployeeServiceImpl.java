@@ -40,7 +40,10 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
     }
 
-    // ── CRUD ─────────────────────────────────────────────────────────────────
+    private Employee getEmployeeOrThrow(Long id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Employee not found with id: " + id));
+    }
 
     @Override
     @Transactional
@@ -65,9 +68,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return toDTO(employeeRepository.save(employee));
     }
 
-    /**
-     * Partial update — only non-null fields in the DTO are applied.
-     */
     @Override
     @Transactional
     public EmployeeResponseDTO update(Long id, EmployeeUpdateDTO request) {
@@ -121,8 +121,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeRepository.deleteById(id);
     }
 
-    // ── Single-record lookups ─────────────────────────────────────────────────
-
     @Override
     public EmployeeResponseDTO findById(Long id) {
         return toDTO(getEmployeeOrThrow(id));
@@ -141,8 +139,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .map(this::toDTO)
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found with email: " + email));
     }
-
-    // ── List / search ─────────────────────────────────────────────────────────
 
     @Override
     public List<EmployeeResponseDTO> findAll() {
@@ -183,8 +179,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .collect(Collectors.toList());
     }
 
-    // ── Status helpers ────────────────────────────────────────────────────────
-
     @Override
     @Transactional
     public EmployeeResponseDTO activate(Long id) {
@@ -201,8 +195,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return toDTO(employeeRepository.save(employee));
     }
 
-    // ── Statistics ────────────────────────────────────────────────────────────
-
     @Override
     public long countByRole(EmployeeRole role) {
         return employeeRepository.countByRole(role);
@@ -213,10 +205,4 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.countByIsActive(true);
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
-
-    private Employee getEmployeeOrThrow(Long id) {
-        return employeeRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Employee not found with id: " + id));
-    }
 }

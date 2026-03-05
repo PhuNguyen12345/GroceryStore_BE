@@ -24,6 +24,7 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
 
+    //=========================== For manipulating data ==========================//
     @PostMapping
     public ResponseEntity<EmployeeResponseDTO> create(@Valid @RequestBody EmployeeRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -43,7 +44,7 @@ public class EmployeeController {
         return ResponseEntity.noContent().build();
     }
 
-
+ //=========================== For listing, getting entity ==========================//
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeResponseDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(employeeService.findById(id));
@@ -73,7 +74,6 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.search(keyword, role, isActive, pageable));
     }
 
-
     @GetMapping("/search/name")
     public ResponseEntity<List<EmployeeResponseDTO>> findByFullName(@RequestParam String name) {
         return ResponseEntity.ok(employeeService.findByFullName(name));
@@ -91,6 +91,7 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.findByIsActive(status));
     }
 
+    //=========================== For activating/deactivating ==========================//
     @PatchMapping("/{id}/activate")
     public ResponseEntity<EmployeeResponseDTO> activate(@PathVariable Long id) {
         return ResponseEntity.ok(employeeService.activate(id));
@@ -101,7 +102,7 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.deactivate(id));
     }
 
-
+    //=========================== For counting records ==========================//
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> stats() {
         long totalActive = employeeService.countActive();
@@ -110,7 +111,6 @@ public class EmployeeController {
         for (EmployeeRole role : EmployeeRole.values()) {
             byRole.put(role.name(), employeeService.countByRole(role));
         }
-
         return ResponseEntity.ok(Map.of(
                 "totalActive", totalActive,
                 "countByRole", byRole
