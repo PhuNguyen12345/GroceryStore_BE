@@ -34,6 +34,9 @@ public class Brand {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @OneToMany(mappedBy = "brand")
     private Set<Product> products = new LinkedHashSet<>();
 

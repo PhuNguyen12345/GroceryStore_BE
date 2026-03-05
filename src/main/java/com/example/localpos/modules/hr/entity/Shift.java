@@ -34,6 +34,9 @@ public class Shift {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @OneToMany(mappedBy = "shift")
     private Set<WorkSchedule> workSchedules = new LinkedHashSet<>();
 
