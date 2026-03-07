@@ -4,6 +4,8 @@ import com.example.localpos.enums.CustomerTier;
 import lombok.Getter;   
 import lombok.Setter;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 public class CustomerResponse {
@@ -14,5 +16,7 @@ public class CustomerResponse {
     private String address;
     private Integer loyaltyPoints;
     private CustomerTier customerTier;
+    private Instant  createdAt;
+    private Instant updatedAt;
     private Boolean isActive;
 }
