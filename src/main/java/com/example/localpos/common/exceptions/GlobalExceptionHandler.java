@@ -25,12 +25,4 @@ public class GlobalExceptionHandler {
         //return 400 with errors
         return ResponseEntity.badRequest().body(errors);
     }
-
-     // 404 - Not Found
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String,String>> handleNotFound(ResourceNotFoundException ex){
-        Map<String, String> body = new HashMap<>();
-        body.put("message", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
-    }
 }

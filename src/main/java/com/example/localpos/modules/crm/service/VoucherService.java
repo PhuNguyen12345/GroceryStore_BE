@@ -2,15 +2,12 @@ package com.example.localpos.modules.crm.service;
 
 import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.enums.DiscountType;
-import com.example.localpos.modules.crm.dto.request.VoucherCreateRequest;
-import com.example.localpos.modules.crm.dto.request.VoucherUpdateRequest;
+import com.example.localpos.modules.crm.dto.request.VoucherRequest;
 import com.example.localpos.modules.crm.dto.response.VoucherResponse;
 
 public interface VoucherService {
 
-    VoucherResponse create(VoucherCreateRequest request);
-
-    VoucherResponse update(Long id, VoucherUpdateRequest request);
+    VoucherResponse saveVoucher(VoucherRequest request);
 
     VoucherResponse getById(Long id);
 

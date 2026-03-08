@@ -1,22 +1,21 @@
-package com.example.localpos.modules.crm.service;
+package com.example.localpos.modules.crm.service.impl;
 
 import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.enums.CustomerTier;
-import com.example.localpos.modules.crm.dto.request.CustomerCreateRequest;
-import com.example.localpos.modules.crm.dto.request.CustomerUpdateRequest;
+import com.example.localpos.modules.crm.dto.request.CustomerRequest;
 import com.example.localpos.modules.crm.dto.response.CustomerResponse;
 import com.example.localpos.modules.crm.entity.Customer;
-import com.example.localpos.modules.crm.mapper.CustomerCreateRequestMapper;
 import com.example.localpos.modules.crm.mapper.CustomerResponseMapper;
-import com.example.localpos.modules.crm.mapper.CustomerUpdateRequestMapper;
 import com.example.localpos.modules.crm.repository.CustomerRepository;
 import com.example.localpos.modules.crm.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 
@@ -26,54 +25,28 @@ import java.util.List;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
-    private final CustomerCreateRequestMapper createMapper;
-    private final CustomerUpdateRequestMapper updateMapper;
     private final CustomerResponseMapper responseMapper;
 
     @Override
-    public CustomerResponse create(CustomerCreateRequest request) {
-        if (customerRepository.findByPhone(request.getPhone()).isPresent()) {
+    public CustomerResponse saveCustomer(CustomerRequest requestBody) {
+        if(ObjectUtils.isEmpty(requestBody)){
+            throw new IllegalArgumentException("Request is empty");
+        }
+        if (customerRepository.findByPhone(requestBody.getPhone()).isPresent()) {
             throw new IllegalArgumentException("Phone already exists");
         }
+        Customer customer = null;
+        if(!ObjectUtils.isEmpty(requestBody.getId())) {
+            customer = customerRepository.findById(requestBody.getId())
+                    .orElse(new Customer());
+        }else{
+            customer = new Customer();
+        }
 
-        Customer customer = createMapper.toEntity(request);
+        BeanUtils.copyProperties(requestBody, customer,"id");
 
-        if (customer.getIsActive() == null) {
+        if (ObjectUtils.isEmpty(customer.getIsActive())) {
             customer.setIsActive(true);
-        }
-
-        Customer saved = customerRepository.save(customer);
-        return responseMapper.toDto(saved);
-    }
-
-    @Override
-    public CustomerResponse update(Long id, CustomerUpdateRequest request) {
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
-
-        if (request.getPhone() != null) {
-            customerRepository.findByPhone(request.getPhone()).ifPresent(existing -> {
-                if (!existing.getId().equals(customer.getId())) {
-                    throw new IllegalArgumentException("Phone already exists");
-                }
-            });
-            customer.setPhone(request.getPhone());
-        }
-
-        if (request.getFullName() != null) {
-            customer.setFullName(request.getFullName());
-        }
-
-        if (request.getEmail() != null) {
-            customer.setEmail(request.getEmail());
-        }
-
-        if (request.getAddress() != null) {
-            customer.setAddress(request.getAddress());
-        }
-
-        if (request.getIsActive() != null) {
-            customer.setIsActive(request.getIsActive());
         }
 
         Customer saved = customerRepository.save(customer);

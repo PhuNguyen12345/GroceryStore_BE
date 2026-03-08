@@ -10,7 +10,9 @@ import java.time.Instant;
 
 @Getter
 @Setter
-public class VoucherCreateRequest {
+public class VoucherRequest {
+
+    private Long id;
 
     @NotBlank(message = "Code is required")
     @Size(max = 20, message = "Code must be at most 20 characters")

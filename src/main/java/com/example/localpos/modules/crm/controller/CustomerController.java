@@ -3,8 +3,7 @@ package com.example.localpos.modules.crm.controller;
 import com.example.localpos.common.constants.ApiPaths;
 import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.enums.CustomerTier;
-import com.example.localpos.modules.crm.dto.request.CustomerCreateRequest;
-import com.example.localpos.modules.crm.dto.request.CustomerUpdateRequest;
+import com.example.localpos.modules.crm.dto.request.CustomerRequest;
 import com.example.localpos.modules.crm.dto.response.CustomerResponse;
 import com.example.localpos.modules.crm.service.CustomerService;
 import lombok.RequiredArgsConstructor;
@@ -17,19 +16,10 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
-    // CREATE
+    // CREATE, Update
     @PostMapping
-    public CustomerResponse createCustomer(@RequestBody CustomerCreateRequest request) {
-        return customerService.create(request);
-    }
-
-    // UPDATE
-    @PutMapping("/{id}")
-    public CustomerResponse updateCustomer(
-            @PathVariable Long id,
-            @RequestBody CustomerUpdateRequest request
-    ) {
-        return customerService.update(id, request);
+    public CustomerResponse saveCustomer(@RequestBody CustomerRequest request) {
+        return customerService.saveCustomer(request);
     }
 
     // GET BY ID

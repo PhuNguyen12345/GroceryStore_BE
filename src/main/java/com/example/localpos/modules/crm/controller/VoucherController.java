@@ -3,8 +3,7 @@ package com.example.localpos.modules.crm.controller;
 import com.example.localpos.common.constants.ApiPaths;
 import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.enums.DiscountType;
-import com.example.localpos.modules.crm.dto.request.VoucherCreateRequest;
-import com.example.localpos.modules.crm.dto.request.VoucherUpdateRequest;
+import com.example.localpos.modules.crm.dto.request.VoucherRequest;
 import com.example.localpos.modules.crm.dto.response.VoucherResponse;
 import com.example.localpos.modules.crm.service.VoucherService;
 import lombok.RequiredArgsConstructor;
@@ -17,19 +16,10 @@ public class VoucherController {
 
     private final VoucherService voucherService;
 
-    // CREATE
+    // CREATE, UPDATE
     @PostMapping
-    public VoucherResponse createVoucher(@RequestBody VoucherCreateRequest request) {
-        return voucherService.create(request);
-    }
-
-    // UPDATE
-    @PutMapping("/{id}")
-    public VoucherResponse updateVoucher(
-            @PathVariable Long id,
-            @RequestBody VoucherUpdateRequest request
-    ) {
-        return voucherService.update(id, request);
+    public VoucherResponse savedVoucher(@RequestBody VoucherRequest request) {
+        return voucherService.saveVoucher(request);
     }
 
     // GET BY ID

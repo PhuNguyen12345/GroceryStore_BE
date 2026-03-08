@@ -2,17 +2,14 @@ package com.example.localpos.modules.crm.service;
 
 import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.enums.CustomerTier;
-import com.example.localpos.modules.crm.dto.request.CustomerCreateRequest;
-import com.example.localpos.modules.crm.dto.request.CustomerUpdateRequest;
+import com.example.localpos.modules.crm.dto.request.CustomerRequest;
 import com.example.localpos.modules.crm.dto.response.CustomerResponse;
 
 public interface CustomerService {
 
-    // create
-    CustomerResponse create(CustomerCreateRequest request);
+    // create, update
+    CustomerResponse saveCustomer(CustomerRequest request);
 
-    // update (PATCH style)
-    CustomerResponse update(Long id, CustomerUpdateRequest request);
 
     // get by id
     CustomerResponse getById(Long id);
