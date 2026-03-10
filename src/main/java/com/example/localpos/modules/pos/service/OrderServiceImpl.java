@@ -181,7 +181,7 @@ public class OrderServiceImpl implements OrderService {
     private void deductInventory(ProductUnit unit, int quantityToDeduct) {
         // Lấy các lô hàng còn tồn kho của Unit này, sắp xếp theo ngày nhập/hạn sử dụng
         List<InventoryBatch> batches = inventoryBatchRepository
-                .findByProductUnitAndCurrentQuantityGreaterThanOrderByCreatedAtAsc(unit, 0);
+                .findByProductUnitAndQuantityAvailableGreaterThanOrderByCreatedAtAsc(unit, 0);
 
         int remaining = quantityToDeduct;
 
