@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -49,9 +51,11 @@ public class Voucher {
     @Column(name = "discount_value", nullable = false, precision = 15, scale = 2)
     private BigDecimal discountValue;
 
+    @CreationTimestamp
     @Column(name = "start_date")
     private Instant startDate;
 
+    @UpdateTimestamp
     @Column(name = "end_date")
     private Instant endDate;
 
