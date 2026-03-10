@@ -45,11 +45,11 @@ public class WarehouseController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<WarehouseResponse> deleteWarehouse(
+    public ResponseEntity<String> deleteWarehouse(
             @PathVariable Long id
     ) {
         warehouseService.deleteWarehouse(id);
         System.out.println("Warehouse deleted with id: " + id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Đã xoá nhà kho với id: "+id);
     }
 }

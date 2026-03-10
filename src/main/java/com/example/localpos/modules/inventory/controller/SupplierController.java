@@ -42,9 +42,9 @@ public class SupplierController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<SupplierResponse> deleteSupplier(@PathVariable Long id) {
+    public ResponseEntity<String> deleteSupplier(@PathVariable Long id) {
         supplierService.deleteSupplier(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Đã xoá thành công nhà phân phối có id: "+id);
     }
 
 }
