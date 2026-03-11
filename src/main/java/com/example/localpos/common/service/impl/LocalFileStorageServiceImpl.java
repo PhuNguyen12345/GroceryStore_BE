@@ -29,8 +29,7 @@ public class LocalFileStorageServiceImpl implements FileStorageService {
     );
 
     private static final Set<String> ALLOWED_FOLDERS = Set.of(
-            "products",
-            "promotions"
+            "images"
     );
 
     @Override
