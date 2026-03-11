@@ -35,7 +35,7 @@ public class InventoryTransaction {
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
-    private Instant createdAt;
+    private Instant createdAt =  Instant.now();
 
     @OneToMany(mappedBy = "transaction")
     private Set<TransactionDetail> transactionDetails = new LinkedHashSet<>();
