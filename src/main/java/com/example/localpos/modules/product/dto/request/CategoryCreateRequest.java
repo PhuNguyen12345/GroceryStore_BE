@@ -13,20 +13,20 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CategoryCreateRequest {
-    @NotBlank(message = "Name must not be blank")
-    @Size(max = 100, message = "Name must not exceed 100 characters")
+    @NotBlank(message = "Tên không được để trống")
+    @Size(max = 100, message = "Tên không được vượt quá 100 ký tự")
     private String name;
 
     private Long parentId;
 
-    @Size(max = 150, message = "Slug must not exceed 150 characters")
+    @Size(max = 150, message = "Slug không được vượt quá 150 ký tự")
     @Pattern(
             regexp = "^[a-z0-9-]*$",
-            message = "Slug must contain only lowercase letters, numbers and hyphens"
+            message = "Slug chỉ được chứa chữ thường, số và dấu gạch nối"
     )
     private String slug;
 
-    @Size(max = 1000, message = "Description is too long")
+    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
     private String description;
 
     private Boolean isActive;

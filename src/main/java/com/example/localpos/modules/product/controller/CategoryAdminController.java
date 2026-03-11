@@ -56,12 +56,12 @@ public class CategoryAdminController {
     @PutMapping("/{id}/restore")
     public ResponseEntity<String> restore(@PathVariable Long id) {
         categoryService.restoreCategory(id);
-        return ResponseEntity.ok("Restore category successfully");
+        return ResponseEntity.ok("Khôi phục danh mục thành công");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<String> delete(@PathVariable Long id) {
         categoryService.deleteCategory(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Xóa danh mục thành công");
     }
 }

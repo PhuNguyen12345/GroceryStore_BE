@@ -13,5 +13,6 @@ public interface ProductResponseMapper extends BaseMapper<Product, ProductRespon
     @Mapping(target = "categoryName", source = "category.name")
     @Mapping(target = "brandId", source = "brand.id")
     @Mapping(target = "brandName", source = "brand.name")
+    @Mapping(target = "imageUrl", source = "imageUrl")
     ProductResponse toDto(Product entity);
 }

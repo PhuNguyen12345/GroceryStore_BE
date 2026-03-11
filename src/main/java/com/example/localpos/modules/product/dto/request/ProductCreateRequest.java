@@ -13,19 +13,19 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductCreateRequest {
-    @NotBlank(message = "Name must not be blank")
-    @Size(max = 100, message = "Name must not exceed 100 characters")
+    @NotBlank(message = "Tên không được để trống")
+    @Size(max = 100, message = "Tên không được vượt quá 100 ký tự")
     private String name;
 
-    @Size(max = 1000, message = "Description is too long")
+    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
     private String description;
 
-    @NotNull(message = "CategoryId must not be null")
+    @NotNull(message = "Mã danh mục không được để trống")
     private Long categoryId;
 
     private Long brandId;
 
-    @Size(max = 500, message = "Image URL must not exceed 500 characters")
+    @Size(max = 500, message = "Đường dẫn ảnh không được vượt quá 500 ký tự")
     private String imageUrl;
 
     private Boolean isActive;

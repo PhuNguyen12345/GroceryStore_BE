@@ -28,7 +28,7 @@ public class ProductUnitServiceImpl implements ProductUnitService {
         ProductUnit productUnit = productUnitMapper.toEntity(request);
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
 
         productUnit.setProduct(product);
 
@@ -40,7 +40,7 @@ public class ProductUnitServiceImpl implements ProductUnitService {
     @Override
     public ProductUnitResponse updateProductUnit(Long id, ProductUnitUpdateRequest request) {
         ProductUnit productUnit = productUnitRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ProductUnit not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn vị sản phẩm"));
 
         if (request.getUnitName() != null) {
             productUnit.setUnitName(request.getUnitName());
@@ -87,7 +87,7 @@ public class ProductUnitServiceImpl implements ProductUnitService {
     @Override
     public void deleteProductUnit(Long id) {
         ProductUnit unit = productUnitRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ProductUnit not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn vị sản phẩm"));
 
         unit.setIsActive(false);
 
@@ -97,7 +97,7 @@ public class ProductUnitServiceImpl implements ProductUnitService {
     @Override
     public void restoreProductUnit(Long id) {
         ProductUnit unit = productUnitRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ProductUnit not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn vị sản phẩm"));
 
         unit.setIsActive(true);
 

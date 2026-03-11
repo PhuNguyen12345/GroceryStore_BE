@@ -47,10 +47,11 @@ public class BrandController {
 
     // CREATE (admin)
     @PostMapping
-    public ResponseEntity<BrandResponse> createBrand(
+    public ResponseEntity<String> createBrand(
             @Valid @RequestBody BrandCreateRequest request
     ) {
-        return ResponseEntity.ok(brandService.addBrand(request));
+        brandService.addBrand(request);
+        return ResponseEntity.ok("Tạo thương hiệu thành công");
     }
 
     // UPDATE (admin)
@@ -66,13 +67,13 @@ public class BrandController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBrand(@PathVariable Long id) {
         brandService.deleteBrand(id);
-        return ResponseEntity.ok("Delete brand successfully");
+        return ResponseEntity.ok("Xóa thương hiệu thành công");
     }
 
     // RESTORE (admin)
     @PutMapping("/{id}/restore")
     public ResponseEntity<String> restoreBrand(@PathVariable Long id) {
         brandService.restoreBrand(id);
-        return ResponseEntity.ok("Restore brand successfully");
+        return ResponseEntity.ok("Khôi phục thương hiệu thành công");
     }
 }

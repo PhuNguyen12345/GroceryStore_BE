@@ -14,19 +14,19 @@ import lombok.*;
 public class ProductUnitUpdateRequest {
     private Long productId;
 
-    @Size(max = 50, message = "Unit name must not exceed 50 characters")
+    @Size(max = 50, message = "Tên đơn vị không được vượt quá 50 ký tự")
     private String unitName;
 
-    @Min(value = 1, message = "Conversion factor must be greater than 0")
+    @Min(value = 1, message = "Hệ số quy đổi phải lớn hơn 0")
     private Integer conversionFactor;
 
-    @Size(max = 50, message = "Barcode must not exceed 50 characters")
+    @Size(max = 50, message = "Mã vạch không được vượt quá 50 ký tự")
     private String barcode;
 
-    @DecimalMin(value = "0.0", inclusive = false, message = "Selling price must be greater than 0")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Giá bán phải lớn hơn 0")
     private BigDecimal sellingPrice;
 
-    @Min(value = 0, message = "Reorder level must be >= 0")
+    @Min(value = 0, message = "Mức tồn kho tối thiểu phải lớn hơn hoặc bằng 0")
     private Integer reorderLevel;
 
     private Boolean isBaseUnit;
