@@ -78,7 +78,7 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse getById(Long id) {
 
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Mã voucher đã tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Mã voucher chưa tồn tại"));
 
         return responseMapper.toDto(voucher);
     }
@@ -87,7 +87,7 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse getByCode(String code) {
 
         Voucher voucher = voucherRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Mã voucher đã tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Mã voucher chưa tồn tại"));
 
         return responseMapper.toDto(voucher);
     }
@@ -198,7 +198,7 @@ public class VoucherServiceImpl implements VoucherService {
     public void delete(Long id) {
 
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Mã voucher đã tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Mã voucher chưa tồn tại"));
 
         if (Boolean.FALSE.equals(voucher.getIsActive())) return;
 
@@ -211,7 +211,7 @@ public class VoucherServiceImpl implements VoucherService {
     public void restore(Long id) {
 
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Mã voucher đã tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Mã voucher chưa tồn tại"));
 
         voucher.setIsActive(true);
 

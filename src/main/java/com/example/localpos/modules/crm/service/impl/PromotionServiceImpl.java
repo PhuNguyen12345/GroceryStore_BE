@@ -25,27 +25,79 @@ public class PromotionServiceImpl implements PromotionService {
     private final PromotionResponseMapper responseMapper;
 
     @Override
-    public PromotionResponse savePromotion(PromotionRequest requestBody) {
-        if (ObjectUtils.isEmpty(requestBody)) {
-            throw new IllegalArgumentException("Dữ liệu yêu cầu đang trống");
+    public PromotionResponse savePromotion(PromotionRequest request) {
+        if (request == null) {
+            throw new RuntimeException("Dữ liệu khuyến mãi không được để trống");
         }
 
-        Promotion promotion = null;
-        if (!ObjectUtils.isEmpty(requestBody.getId())) {
-            promotion = promotionRepository.findById(requestBody.getId())
-                    .orElse(new Promotion());
+        Promotion promotion;
+
+        // UPDATE
+        if (request.getId() != null) {
+            promotion = promotionRepository.findById(request.getId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi"));
+
+            if (request.getName() != null && !request.getName().trim().isBlank()) {
+                String newName = request.getName().trim();
+
+                if (!newName.equalsIgnoreCase(promotion.getName())) {
+                    if (promotionRepository.existsByNameIgnoreCase(newName)) {
+                        throw new RuntimeException("Tên khuyến mãi đã tồn tại");
+                    }
+                    promotion.setName(newName);
+                }
+            }
+
         } else {
+            // CREATE
+            if (request.getName() == null || request.getName().trim().isBlank()) {
+                throw new RuntimeException("Tên khuyến mãi không được để trống");
+            }
+
+            String newName = request.getName().trim();
+
+            if (promotionRepository.existsByNameIgnoreCase(newName)) {
+                throw new RuntimeException("Tên khuyến mãi đã tồn tại");
+            }
+
             promotion = new Promotion();
+            BeanUtils.copyProperties(request, promotion, "id", "name", "bannerUrl");
+            promotion.setName(newName);
+
+            // xử lý ảnh giống product
+            promotion.setBannerUrl(request.getBannerUrl());
+
+            if (promotion.getIsActive() == null) {
+                promotion.setIsActive(true);
+            }
+
+            Promotion savedPromotion = promotionRepository.save(promotion);
+            return responseMapper.toDto(savedPromotion);
         }
 
-        BeanUtils.copyProperties(requestBody, promotion, "id");
-
-        if (ObjectUtils.isEmpty(promotion.getIsActive())) {
-            promotion.setIsActive(true);
+        if (request.getDescription() != null) {
+            promotion.setDescription(request.getDescription());
         }
 
-        Promotion saved = promotionRepository.save(promotion);
-        return responseMapper.toDto(saved);
+        // xử lý ảnh giống product
+        if (request.getBannerUrl() != null && !request.getBannerUrl().trim().isBlank()) {
+            promotion.setBannerUrl(request.getBannerUrl().trim());
+        }
+
+        if (request.getStartDate() != null) {
+            promotion.setStartDate(request.getStartDate());
+        }
+
+        if (request.getEndDate() != null) {
+            promotion.setEndDate(request.getEndDate());
+        }
+
+        if (request.getIsActive() != null) {
+            promotion.setIsActive(request.getIsActive());
+        }
+
+        Promotion savedPromotion = promotionRepository.save(promotion);
+        return responseMapper.toDto(savedPromotion);
     }
 
     @Override

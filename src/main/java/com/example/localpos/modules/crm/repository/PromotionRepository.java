@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
+    boolean existsByNameIgnoreCase(String name);
+
     Page<Promotion> findAllByIsActive(Boolean isActive, Pageable pageable);
 
     Page<Promotion> findAllByNameContainingIgnoreCase(String keyword, Pageable pageable);

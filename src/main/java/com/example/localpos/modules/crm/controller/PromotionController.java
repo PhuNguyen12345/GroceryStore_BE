@@ -60,7 +60,7 @@ public class PromotionController {
         return ResponseEntity.ok("Xóa khuyến mãi thành công");
     }
 
-    @PutMapping("/restore/{id}")
+    @PatchMapping("/{id}/restore")
     public ResponseEntity<String> restore(@PathVariable Long id) {
         promotionService.restore(id);
         return ResponseEntity.ok("Khôi phục khuyến mãi thành công");

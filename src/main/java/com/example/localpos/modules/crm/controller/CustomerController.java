@@ -17,7 +17,7 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
-    // CREATE, Update
+    // CREATE, UPDATE
     @PostMapping
     public ResponseEntity<String> saveCustomer(@RequestBody CustomerRequest request) {
         customerService.saveCustomer(request);
