@@ -13,11 +13,11 @@ import lombok.Setter;
 @AllArgsConstructor
 public class BrandCreateRequest {
 
-    @NotBlank(message = "Name must not be blank")
-    @Size(max = 100, message = "Name must not exceed 100 characters")
+    @NotBlank(message = "Tên không được để trống")
+    @Size(max = 100, message = "Tên không được vượt quá 100 ký tự")
     private String name;
 
-    @Size(max = 1000, message = "Description is too long")
+    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
     private String description;
 
     private Boolean isActive;

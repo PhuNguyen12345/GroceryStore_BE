@@ -7,7 +7,6 @@ import com.example.localpos.modules.product.dto.response.BrandResponse;
 import com.example.localpos.modules.product.entity.Brand;
 import com.example.localpos.modules.product.mapper.BrandCreateRequestMapper;
 import com.example.localpos.modules.product.mapper.BrandResponseMapper;
-import com.example.localpos.modules.product.mapper.BrandUpdateRequestMapper;
 import com.example.localpos.modules.product.repository.BrandRepository;
 import com.example.localpos.modules.product.service.BrandService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,6 @@ import java.util.List;
 public class BrandServiceImpl implements BrandService {
     private final BrandRepository brandRepository;
     private final BrandCreateRequestMapper brandCreateRequestMapper;
-    private final BrandUpdateRequestMapper brandUpdateRequestMapper;
     private final BrandResponseMapper brandResponseMapper;
 
     @Override
@@ -86,12 +84,12 @@ public class BrandServiceImpl implements BrandService {
     public BrandResponse addBrand(BrandCreateRequest request) {
         Brand brand = brandCreateRequestMapper.toEntity(request);
 
-        // check name unique
+        // kiểm tra tên có bị trùng không
         if (request.getName() != null && brandRepository.existsByNameIgnoreCase(request.getName())) {
-            throw new IllegalArgumentException("Brand name already exists");
+            throw new IllegalArgumentException("Tên thương hiệu đã tồn tại");
         }
 
-        // default isActive
+        // mặc định isActive
         if (brand.getIsActive() == null) brand.setIsActive(true);
 
         Brand saved = brandRepository.save(brand);
@@ -101,13 +99,13 @@ public class BrandServiceImpl implements BrandService {
     @Override
     public BrandResponse updateBrand(Long id, BrandUpdateRequest request) {
         Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Brand not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu"));
 
         if (request.getName() != null) {
-            // check trùng tên với brand khác
+            // kiểm tra trùng tên với thương hiệu khác
             if (brandRepository.existsByNameIgnoreCase(request.getName())
                     && !brand.getName().equalsIgnoreCase(request.getName())) {
-                throw new IllegalArgumentException("Brand name already exists");
+                throw new IllegalArgumentException("Tên thương hiệu đã tồn tại");
             }
             brand.setName(request.getName());
         }
@@ -127,7 +125,7 @@ public class BrandServiceImpl implements BrandService {
     @Override
     public void deleteBrand(Long id) {
         Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Brand not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu"));
 
         if (Boolean.FALSE.equals(brand.getIsActive())) return;
 
@@ -138,7 +136,7 @@ public class BrandServiceImpl implements BrandService {
     @Override
     public void restoreBrand(Long id) {
         Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Brand not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu"));
 
         brand.setIsActive(true);
         brandRepository.save(brand);

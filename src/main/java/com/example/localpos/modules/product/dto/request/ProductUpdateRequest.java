@@ -15,13 +15,14 @@ public class ProductUpdateRequest {
     @Size(max = 200)
     private String name;
 
+    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
     private String description;
 
     private Long categoryId;
 
     private Long brandId;
 
-    @Size(max = 500)
+    @Size(max = 500, message = "Đường dẫn ảnh không được vượt quá 500 ký tự")
     private String imageUrl;
 
     private Boolean isActive;
