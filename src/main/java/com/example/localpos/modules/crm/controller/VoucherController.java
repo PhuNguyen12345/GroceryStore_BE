@@ -7,6 +7,7 @@ import com.example.localpos.modules.crm.dto.request.VoucherRequest;
 import com.example.localpos.modules.crm.dto.response.VoucherResponse;
 import com.example.localpos.modules.crm.service.VoucherService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,8 +19,9 @@ public class VoucherController {
 
     // CREATE, UPDATE
     @PostMapping
-    public VoucherResponse savedVoucher(@RequestBody VoucherRequest request) {
-        return voucherService.saveVoucher(request);
+    public ResponseEntity<String> savedVoucher(@RequestBody VoucherRequest request) {
+        voucherService.saveVoucher(request);
+        return ResponseEntity.ok("Lưu mã giảm giá thành công");
     }
 
     // GET BY ID
@@ -85,13 +87,15 @@ public class VoucherController {
 
     // SOFT DELETE
     @DeleteMapping("/{id}")
-    public void deleteVoucher(@PathVariable Long id) {
+    public ResponseEntity<String> deleteVoucher(@PathVariable Long id) {
         voucherService.delete(id);
+        return ResponseEntity.ok("Xóa mã giảm giá thành công");
     }
 
     // RESTORE
     @PatchMapping("/{id}/restore")
-    public void restoreVoucher(@PathVariable Long id) {
+    public ResponseEntity<String> restoreVoucher(@PathVariable Long id) {
         voucherService.restore(id);
+        return ResponseEntity.ok("Khôi phục mã giảm giá thành công");
     }
 }
