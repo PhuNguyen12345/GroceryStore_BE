@@ -29,4 +29,15 @@ public class Warehouse {
     @OneToMany(mappedBy = "warehouse")
     private Set<InventoryBatch> inventoryBatches = new LinkedHashSet<>();
 
+    @Override
+    public String toString() {
+        return "Warehouse{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", address='" + address + '\'' +
+                ", isActive=" + isActive +
+                ", inventoryBatches=" + inventoryBatches +
+                '}';
+    }
 }
+
