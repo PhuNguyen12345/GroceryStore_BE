@@ -17,39 +17,21 @@ import java.util.Set;
 public class FileController {
     private final FileStorageService fileStorageService;
 
-    private static final Set<String> ALLOWED_FOLDERS = Set.of("products", "promotions");
-
-    private String validateFolder(String folder) {
-        if (folder == null || folder.isBlank()) {
-            return "product";
-        }
-
-        String normalizedFolder = folder.trim().toLowerCase();
-
-        if (!ALLOWED_FOLDERS.contains(normalizedFolder)) {
-            throw new IllegalArgumentException("Folder chỉ được là 'product' hoặc 'promotion'");
-        }
-
-        return normalizedFolder;
-    }
+    private static final String IMAGE_FOLDER = "images";
 
     @PostMapping("/upload-image")
     public ResponseEntity<FileUploadResponse> uploadImage(
-            @RequestPart("file") MultipartFile file,
-            @RequestParam(defaultValue = "product") String folder
+            @RequestPart("file") MultipartFile file
     ) {
-        String validFolder = validateFolder(folder);
-        return ResponseEntity.ok(fileStorageService.uploadImage(file, validFolder));
+        return ResponseEntity.ok(fileStorageService.uploadImage(file, IMAGE_FOLDER));
     }
 
     @PutMapping("/replace-image")
     public ResponseEntity<FileUploadResponse> replaceImage(
             @RequestPart("file") MultipartFile file,
-            @RequestParam String oldFileUrl,
-            @RequestParam(defaultValue = "product") String folder
+            @RequestParam String oldFileUrl
     ) {
-        String validFolder = validateFolder(folder);
-        return ResponseEntity.ok(fileStorageService.replaceImage(file, oldFileUrl, validFolder));
+        return ResponseEntity.ok(fileStorageService.replaceImage(file, oldFileUrl, IMAGE_FOLDER));
     }
 
     @DeleteMapping("/delete-image")
