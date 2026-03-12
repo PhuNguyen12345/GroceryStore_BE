@@ -9,7 +9,6 @@ import com.example.localpos.modules.crm.mapper.VoucherResponseMapper;
 import com.example.localpos.modules.crm.repository.VoucherRepository;
 import com.example.localpos.modules.crm.service.VoucherService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,7 +18,6 @@ import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VoucherServiceImpl implements VoucherService {
@@ -29,23 +27,38 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Override
     public VoucherResponse saveVoucher(VoucherRequest requestBody) {
+        // check empty request
         if (ObjectUtils.isEmpty(requestBody)) {
-            throw new IllegalArgumentException("request is empty");
+            throw new IllegalArgumentException("Dữ liệu gửi lên không được để trống");
         }
 
-        Voucher voucher = null;
-
-        if (!ObjectUtils.isEmpty(requestBody.getId())) {
-            voucher = voucherRepository.findById(requestBody.getId())
-                    .orElse(new Voucher());
-
-            if (voucherRepository.findByCode(requestBody.getCode()).isPresent()
-                    && !voucher.getCode().equals(requestBody.getCode())) {
-                throw new IllegalArgumentException("Code already exists");
+        // check startDate < endDate
+        if (requestBody.getStartDate() != null && requestBody.getEndDate() != null) {
+            if (!requestBody.getStartDate().isBefore(requestBody.getEndDate())) {
+                throw new IllegalArgumentException("Ngày bắt đầu phải nhỏ hơn ngày kết thúc");
             }
+        }
+
+        Voucher voucher;
+
+        // update voucher
+        if (!ObjectUtils.isEmpty(requestBody.getId())) {
+
+            voucher = voucherRepository.findById(requestBody.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy voucher cần cập nhật"));
+
+            voucherRepository.findByCode(requestBody.getCode())
+                    .ifPresent(existingVoucher -> {
+                        // check duplicate code
+                        if (!existingVoucher.getId().equals(voucher.getId())) {
+                            throw new IllegalArgumentException("Mã voucher đã tồn tại");
+                        }
+                    });
+
         } else {
+            // create new voucher
             if (voucherRepository.findByCode(requestBody.getCode()).isPresent()) {
-                throw new IllegalArgumentException("Code already exists");
+                throw new IllegalArgumentException("Mã voucher đã tồn tại");
             }
             voucher = new Voucher();
         }
@@ -57,6 +70,7 @@ public class VoucherServiceImpl implements VoucherService {
         }
 
         Voucher saved = voucherRepository.save(voucher);
+
         return responseMapper.toDto(saved);
     }
 
@@ -64,7 +78,7 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse getById(Long id) {
 
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Voucher not found"));
+                .orElseThrow(() -> new RuntimeException("Mã voucher chưa tồn tại"));
 
         return responseMapper.toDto(voucher);
     }
@@ -73,7 +87,7 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse getByCode(String code) {
 
         Voucher voucher = voucherRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Voucher not found"));
+                .orElseThrow(() -> new RuntimeException("Mã voucher chưa tồn tại"));
 
         return responseMapper.toDto(voucher);
     }
@@ -184,7 +198,7 @@ public class VoucherServiceImpl implements VoucherService {
     public void delete(Long id) {
 
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Voucher not found"));
+                .orElseThrow(() -> new RuntimeException("Mã voucher chưa tồn tại"));
 
         if (Boolean.FALSE.equals(voucher.getIsActive())) return;
 
@@ -197,7 +211,7 @@ public class VoucherServiceImpl implements VoucherService {
     public void restore(Long id) {
 
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Voucher not found"));
+                .orElseThrow(() -> new RuntimeException("Mã voucher chưa tồn tại"));
 
         voucher.setIsActive(true);
 
