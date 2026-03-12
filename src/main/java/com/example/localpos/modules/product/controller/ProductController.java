@@ -23,48 +23,48 @@ public class ProductController {
 
     // GET ALL PRODUCTS
     @GetMapping
-    public PageResponse<ProductResponse> getAllProducts(
+    public ResponseEntity<PageResponse<ProductResponse>> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return productService.getAllProducts(page, size);
+        return ResponseEntity.ok(productService.getAllProducts(page, size));
     }
 
     // SEARCH PRODUCT BY NAME
     @GetMapping("/search")
-    public PageResponse<ProductResponse> searchProducts(
+    public ResponseEntity<PageResponse<ProductResponse>> searchProducts(
             @RequestParam String name,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return productService.findProductsByName(name, page, size);
+        return ResponseEntity.ok(productService.findProductsByName(name, page, size));
     }
 
     // FIND BY CATEGORY
     @GetMapping("/category/{categoryId}")
-    public PageResponse<ProductResponse> getProductsByCategory(
+    public ResponseEntity<PageResponse<ProductResponse>> getProductsByCategory(
             @PathVariable Long categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return productService.findProductsByCategory(categoryId, page, size);
+        return ResponseEntity.ok(productService.findProductsByCategory(categoryId, page, size));
     }
 
     // FIND BY BRAND
     @GetMapping("/brand/{brandId}")
-    public PageResponse<ProductResponse> getProductsByBrand(
+    public ResponseEntity<PageResponse<ProductResponse>> getProductsByBrand(
             @PathVariable Long brandId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return productService.findProductsByBrand(brandId, page, size);
+        return ResponseEntity.ok(productService.findProductsByBrand(brandId, page, size));
     }
 
     // CREATE PRODUCT
-
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest request) {
-        return ResponseEntity.ok(productService.addProduct(request));
+        ProductResponse response = productService.addProduct(request);
+        return ResponseEntity.ok(response);
     }
 
     // UPDATE PRODUCT
@@ -78,19 +78,15 @@ public class ProductController {
 
     // SOFT DELETE PRODUCT
     @DeleteMapping("/{id}")
-    public String deleteProduct(@PathVariable Long id) {
-
+    public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-
-        return "Product deleted successfully";
+        return ResponseEntity.ok("Xóa sản phẩm thành công");
     }
 
     // RESTORE PRODUCT
     @PutMapping("/restore/{id}")
-    public String restoreProduct(@PathVariable Long id) {
-
+    public ResponseEntity<String> restoreProduct(@PathVariable Long id) {
         productService.restoreProduct(id);
-
-        return "Product restored successfully";
+        return ResponseEntity.ok("Khôi phục sản phẩm thành công");
     }
 }

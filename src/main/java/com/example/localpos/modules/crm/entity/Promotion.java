@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
@@ -23,9 +24,11 @@ public class Promotion {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
+    @CreationTimestamp
     @Column(name = "start_date", nullable = false)
     private Instant startDate;
 
+    @CreationTimestamp
     @Column(name = "end_date", nullable = false)
     private Instant endDate;
 

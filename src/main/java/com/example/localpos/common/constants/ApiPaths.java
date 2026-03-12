@@ -37,4 +37,8 @@ public class ApiPaths {
         public static final String ORDER =  API_VERSION + "/orders";
         public static final String PAYMENT =   API_VERSION + "/payments";
     }
+
+    public static final class FileCtrl {
+        public static final String FILE =  API_VERSION + "/files";
+    }
 }

@@ -6,6 +6,7 @@ import com.example.localpos.modules.product.dto.request.ProductUnitUpdateRequest
 import com.example.localpos.modules.product.dto.response.ProductUnitResponse;
 import com.example.localpos.modules.product.service.ProductUnitService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,32 +18,32 @@ public class ProductUnitController {
     private final ProductUnitService productUnitService;
 
     @PostMapping
-    public ProductUnitResponse create(@RequestBody ProductUnitCreateRequest request) {
-        return productUnitService.addProductUnit(request);
+    public ResponseEntity<String> create(@RequestBody ProductUnitCreateRequest request) {
+        productUnitService.addProductUnit(request);
+        return ResponseEntity.ok("Tạo đơn vị sản phẩm thành công");
     }
 
     @PutMapping("/{id}")
-    public ProductUnitResponse update(
+    public ResponseEntity<ProductUnitResponse> update(
             @PathVariable Long id,
             @RequestBody ProductUnitUpdateRequest request) {
-
-        return productUnitService.updateProductUnit(id, request);
+        return ResponseEntity.ok(productUnitService.updateProductUnit(id, request));
     }
 
     @GetMapping("/product/{productId}")
-    public List<ProductUnitResponse> getUnits(@PathVariable Long productId) {
-        return productUnitService.getUnitsByProduct(productId);
+    public ResponseEntity<List<ProductUnitResponse>> getUnits(@PathVariable Long productId) {
+        return ResponseEntity.ok(productUnitService.getUnitsByProduct(productId));
     }
 
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
+    public ResponseEntity<String> delete(@PathVariable Long id) {
         productUnitService.deleteProductUnit(id);
-        return "Product unit deleted";
+        return ResponseEntity.ok("Xóa đơn vị sản phẩm thành công");
     }
 
     @PutMapping("/restore/{id}")
-    public String restore(@PathVariable Long id) {
+    public ResponseEntity<String> restore(@PathVariable Long id) {
         productUnitService.restoreProductUnit(id);
-        return "Product unit restored";
+        return ResponseEntity.ok("Khôi phục đơn vị sản phẩm thành công");
     }
 }

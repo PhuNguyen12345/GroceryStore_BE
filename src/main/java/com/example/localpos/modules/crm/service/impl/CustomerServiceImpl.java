@@ -9,7 +9,6 @@ import com.example.localpos.modules.crm.mapper.CustomerResponseMapper;
 import com.example.localpos.modules.crm.repository.CustomerRepository;
 import com.example.localpos.modules.crm.service.CustomerService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,7 +18,6 @@ import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
@@ -30,10 +28,10 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerResponse saveCustomer(CustomerRequest requestBody) {
         if(ObjectUtils.isEmpty(requestBody)){
-            throw new IllegalArgumentException("Request is empty");
+            throw new IllegalArgumentException("Dữ liệu yêu cầu đang trống");
         }
         if (customerRepository.findByPhone(requestBody.getPhone()).isPresent()) {
-            throw new IllegalArgumentException("Phone already exists");
+            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
         }
         Customer customer = null;
         if(!ObjectUtils.isEmpty(requestBody.getId())) {
@@ -56,7 +54,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerResponse getById(Long id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
 
         return responseMapper.toDto(customer);
     }
@@ -64,7 +62,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerResponse getByPhone(String phone) {
         Customer customer = customerRepository.findByPhone(phone)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
 
         return responseMapper.toDto(customer);
     }
@@ -186,7 +184,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public void delete(Long id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
 
         if (Boolean.FALSE.equals(customer.getIsActive())) {
             return;
@@ -199,7 +197,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public void restore(Long id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
 
         customer.setIsActive(true);
         customerRepository.save(customer);

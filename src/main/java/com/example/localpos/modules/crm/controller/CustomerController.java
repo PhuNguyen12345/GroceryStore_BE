@@ -7,6 +7,7 @@ import com.example.localpos.modules.crm.dto.request.CustomerRequest;
 import com.example.localpos.modules.crm.dto.response.CustomerResponse;
 import com.example.localpos.modules.crm.service.CustomerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,10 +17,11 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
-    // CREATE, Update
+    // CREATE, UPDATE
     @PostMapping
-    public CustomerResponse saveCustomer(@RequestBody CustomerRequest request) {
-        return customerService.saveCustomer(request);
+    public ResponseEntity<String> saveCustomer(@RequestBody CustomerRequest request) {
+        customerService.saveCustomer(request);
+        return ResponseEntity.ok("Lưu khách hàng thành công");
     }
 
     // GET BY ID
@@ -95,13 +97,15 @@ public class CustomerController {
 
     // SOFT DELETE
     @DeleteMapping("/{id}")
-    public void deleteCustomer(@PathVariable Long id) {
+    public ResponseEntity<String> deleteCustomer(@PathVariable Long id) {
         customerService.delete(id);
+        return ResponseEntity.ok("Xóa khách hàng thành công");
     }
 
     // RESTORE
     @PatchMapping("/{id}/restore")
-    public void restoreCustomer(@PathVariable Long id) {
+    public ResponseEntity<String> restoreCustomer(@PathVariable Long id) {
         customerService.restore(id);
+        return ResponseEntity.ok("Khôi phục khách hàng thành công");
     }
 }
