@@ -42,22 +42,22 @@ public class InventoryBatch {
 
     @ColumnDefault("0")
     @Column(name = "quantity_available", nullable = false)
-    private Integer quantityAvailable;
+    private Integer quantityAvailable = 0;
 
     @Column(name = "import_price", nullable = false, precision = 15, scale = 2)
     private BigDecimal importPrice;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
 
     @ColumnDefault("0")
     @Column(name = "discount_percent")
-    private Integer discountPercent;
+    private Integer discountPercent = 0;
 
-    @ColumnDefault("0")
+    @ColumnDefault("false")
     @Column(name = "is_discounted")
-    private Boolean isDiscounted;
+    private Boolean isDiscounted = false;
 
     @OneToMany(mappedBy = "inventoryBatch")
     private Set<TransactionDetail> transactionDetails = new LinkedHashSet<>();

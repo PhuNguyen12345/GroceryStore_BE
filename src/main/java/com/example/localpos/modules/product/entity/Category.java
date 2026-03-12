@@ -1,11 +1,10 @@
 package com.example.localpos.modules.product.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.*;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -36,11 +35,11 @@ public class Category {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
+    @CreationTimestamp
     @Column(name = "created_at")
     private Instant createdAt;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private Instant updatedAt;
 
@@ -54,4 +53,16 @@ public class Category {
     @OneToMany(mappedBy = "category")
     private Set<Product> products = new LinkedHashSet<>();
 
+    @Override
+    public String toString() {
+        return "Category{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", parentId=" + (parent != null ? parent.getId() : null) +
+                ", slug='" + slug + '\'' +
+                ", isActive=" + isActive +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                '}';
+    }
 }
