@@ -3,7 +3,10 @@ package com.example.localpos.modules.pos.controller;
 import com.example.localpos.modules.pos.dto.request.CartItemRequest;
 import com.example.localpos.modules.pos.dto.request.CheckoutRequest;
 import com.example.localpos.modules.pos.dto.request.OrderRequest;
+import com.example.localpos.modules.pos.dto.response.OrderDetailResponse;
+import com.example.localpos.modules.pos.dto.response.OrderResponse;
 import com.example.localpos.modules.pos.entity.Order;
+import com.example.localpos.modules.pos.mapper.OrderMapper;
 import com.example.localpos.modules.pos.service.OrderServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +21,8 @@ public class OrderController {
 
     private final OrderServiceImpl orderService;
 
+    private final OrderMapper orderMapper;
+
 
     @PostMapping("/init")
     public ResponseEntity<Order> initOrder(@RequestBody OrderRequest request) {
@@ -27,11 +32,11 @@ public class OrderController {
 
 
     @PutMapping("/{id}/items")
-    public ResponseEntity<Order> updateCart(
+    public ResponseEntity<OrderResponse> updateCart(
             @PathVariable Long id,
             @RequestBody CartItemRequest request) {
         Order updatedOrder = orderService.updateCart(id, request);
-        return ResponseEntity.ok(updatedOrder);
+        return ResponseEntity.ok(orderMapper.toDTO(updatedOrder));
     }
 
 

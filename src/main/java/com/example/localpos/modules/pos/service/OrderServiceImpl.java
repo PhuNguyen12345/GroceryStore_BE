@@ -2,8 +2,8 @@ package com.example.localpos.modules.pos.service;
 
 import com.example.localpos.enums.OrderStatus;
 import com.example.localpos.enums.PaymentMethod;
-import com.example.localpos.modules.crm.repository.CustomerRepository;
-import com.example.localpos.modules.hr.repository.EmployeeRepository;
+import com.example.localpos.modules.pos.repository.CustomerRepository;
+import com.example.localpos.modules.pos.repository.EmployeeRepository;
 import com.example.localpos.modules.inventory.entity.InventoryBatch;
 import com.example.localpos.modules.pos.dto.request.CartItemRequest;
 import com.example.localpos.modules.pos.dto.request.CheckoutRequest;
@@ -30,8 +30,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
-//    private final EmployeeRepository employeeRepository;
-//    private final CustomerRepository customerRepository;
+    private final EmployeeRepository employeeRepository;
+    private final CustomerRepository customerRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final ProductUnitRepository productUnitRepository;
     private final InventoryBatchRepository inventoryBatchRepository;
@@ -41,16 +41,16 @@ public class OrderServiceImpl implements OrderService {
     public Order createNewOrder(OrderRequest request) {
         Order order = new Order();
 
-//        // 1. Kiểm tra & Gán Nhân viên (Bắt buộc trong POS)
-//        var employee = employeeRepository.findById(request.getEmployeeId())
-//                .orElseThrow(() -> new RuntimeException("Nhân viên không tồn tại!"));
-//        order.setEmployee(employee);
-//
-//        // 2. Gán Khách hàng (Nếu có - khách vãng lai thì để null)
-//        if (request.getCustomerId() != null) {
-//            customerRepository.findById(request.getCustomerId())
-//                    .ifPresent(order::setCustomer);
-//        }
+        // 1. Kiểm tra & Gán Nhân viên (Bắt buộc trong POS)
+        var employee = employeeRepository.findById(request.getEmployeeId())
+                .orElseThrow(() -> new RuntimeException("Nhân viên không tồn tại!"));
+        order.setEmployee(employee);
+
+        // 2. Gán Khách hàng (Nếu có - khách vãng lai thì để null)
+        if (request.getCustomerId() != null) {
+            customerRepository.findById(request.getCustomerId())
+                    .ifPresent(order::setCustomer);
+        }
 
         // 3. Logic tạo mã đơn hàng (Ví dụ: ORD-20240311-XXXX)
         order.setOrderCode(generateUniqueOrderCode());
@@ -95,7 +95,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElse(null);
 
         if (existingDetail != null) {
-            // Nếu đã có: Cập nhật số lượng mới (hoặc cộng dồn tùy UI của bạn, ở đây tôi dùng ghi đè)
+            // Nếu đã có: Cập nhật số lượng mới
             if (request.getQuantity() <= 0) {
                 return removeItem(orderId, request.getProductUnitId());
             }
@@ -110,7 +110,7 @@ public class OrderServiceImpl implements OrderService {
                 newDetail.setProductUnit(unit);
                 newDetail.setQuantity(request.getQuantity());
 
-                // LẤY GIÁ BÁN TẠI THỜI ĐIỂM NÀY TỪ PRODUCT_UNIT
+                // LẤY GIÁ BÁN TẠI THỜI ĐIỂM BÁN TỪ PRODUCT_UNIT
                 newDetail.setUnitPrice(unit.getSellingPrice());
                 newDetail.setSubtotal(unit.getSellingPrice().multiply(BigDecimal.valueOf(request.getQuantity())));
 
@@ -167,8 +167,6 @@ public class OrderServiceImpl implements OrderService {
         order.setPaymentMethod(request.getPaymentMethod());
         order.setStatus(OrderStatus.COMPLETED); // Đổi trạng thái sang hoàn tất
 
-        // 3. Ghi nhận thời gian thanh toán (nếu bạn có trường này, hoặc dùng createdAt làm mốc)
-        // Lưu Payment record nếu bạn có bảng Payment riêng (dựa trên Set<Payment> trong Entity)
 
         return orderRepository.save(order);
     }
@@ -214,7 +212,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setTotalAmount(total);
 
-        // Tính Final Amount (Sau khi trừ discount voucher nếu có)
+        // Tính Final Amount
         BigDecimal discount = order.getDiscountAmount() != null ? order.getDiscountAmount() : BigDecimal.ZERO;
         order.setFinalAmount(total.subtract(discount));
     }
