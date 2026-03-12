@@ -4,7 +4,9 @@ import com.example.localpos.enums.EmployeeRole;
 import com.example.localpos.modules.inventory.entity.InventoryTransaction;
 import com.example.localpos.modules.pos.entity.Order;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
@@ -15,6 +17,8 @@ import java.util.Set;
 @Getter
 @Setter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "employees", uniqueConstraints = {
         @UniqueConstraint(name = "username", columnNames = {"username"}),
         @UniqueConstraint(name = "email", columnNames = {"email"})

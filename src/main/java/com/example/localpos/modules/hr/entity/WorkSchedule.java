@@ -1,7 +1,9 @@
 package com.example.localpos.modules.hr.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
@@ -11,6 +13,8 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "work_schedules")
 public class WorkSchedule {
     @Id
