@@ -24,31 +24,20 @@ import java.util.*;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
-    // Repository dùng để truy cập cơ sở dữ liệu
     private final CategoryRepository categoryRepository;
-
-    // Mapper dùng để chuyển request -> entity
     private final CategoryCreateRequestMapper categoryCreateRequestMapper;
-
-    // Mapper dùng để chuyển entity -> response
     private final CategoryResponseMapper categoryResponseMapper;
 
-    // Lấy toàn bộ category có phân trang
     @Override
     public PageResponse<CategoryResponse> getAllCategories(int page, int size) {
-
-        // tạo đối tượng pageable (page + size)
         Pageable pageable = PageRequest.of(page, size);
 
-        // lấy dữ liệu từ database
         Page<Category> categoryPage = categoryRepository.findAllByOrderByNameAsc(pageable);
 
-        // chuyển entity -> response
         List<CategoryResponse> responseList = categoryPage.getContent().stream()
                 .map(categoryResponseMapper::toDto)
                 .toList();
 
-        // trả về PageResponse
         return PageResponse.<CategoryResponse>builder()
                 .content(responseList)
                 .page(categoryPage.getNumber())
@@ -58,16 +47,13 @@ public class CategoryServiceImpl implements CategoryService {
                 .build();
     }
 
-    // Tìm category theo tên
     @Override
     public PageResponse<CategoryResponse> findCategoriesByName(String name, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
-        // truy vấn tìm kiếm theo tên
         Page<Category> categoryPage =
                 categoryRepository.findByNameContainingIgnoreCase(name, pageable);
 
-        // chuyển entity -> response
         List<CategoryResponse> responseList = categoryPage.getContent().stream()
                 .map(categoryResponseMapper::toDto)
                 .toList();
@@ -81,8 +67,6 @@ public class CategoryServiceImpl implements CategoryService {
                 .build();
     }
 
-    // Lấy category theo parentId
-    // dùng để lấy danh mục con
     @Override
     public PageResponse<CategoryResponse> findCategoriesByParentId(Long parentId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -101,13 +85,15 @@ public class CategoryServiceImpl implements CategoryService {
                 .build();
     }
 
-    // Tạo category mới
     @Override
     public CategoryResponse addCategory(CategoryCreateRequest request) {
-        // chuyển request -> entity
+
+        if (categoryRepository.existsByNameIgnoreCase(request.getName())) {
+            throw new IllegalArgumentException("Tên danh mục đã tồn tại");
+        }
+
         Category category = categoryCreateRequestMapper.toEntity(request);
 
-        // nếu có parentId thì set parent
         if (request.getParentId() != null) {
             Category parent = categoryRepository.findById(request.getParentId())
                     .orElseThrow(() ->
@@ -116,55 +102,46 @@ public class CategoryServiceImpl implements CategoryService {
             category.setParent(parent);
         }
 
-        // tự động tạo slug nếu client không truyền
         if (request.getSlug() == null || request.getSlug().isBlank()) {
             category.setSlug(toSlug(request.getName()));
         }
 
-        // kiểm tra slug có bị trùng không
         if (category.getSlug() != null && categoryRepository.existsBySlug(category.getSlug())) {
             throw new IllegalArgumentException("Slug đã tồn tại");
         }
 
-        // nếu client không truyền isActive thì mặc định là true
         if (category.getIsActive() == null) {
             category.setIsActive(true);
         }
 
-        // lưu xuống database
         Category saved = categoryRepository.save(category);
-
-        // chuyển entity -> response
         return categoryResponseMapper.toDto(saved);
     }
 
-    // Cập nhật category, chỉ cập nhật field nào khác null
     @Override
     public CategoryResponse updateCategory(Long id, CategoryUpdateRequest request) {
-        // tìm category cần cập nhật
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Không tìm thấy danh mục"));
 
-        // cập nhật tên
+        if (request.getName() != null &&
+                categoryRepository.existsByNameIgnoreCaseAndIdNot(request.getName(), id)) {
+            throw new RuntimeException("Tên danh mục đã tồn tại");
+        }
+
         if (request.getName() != null) {
             category.setName(request.getName());
         }
 
-        // cập nhật mô tả
         if (request.getDescription() != null) {
             category.setDescription(request.getDescription());
         }
 
-        // cập nhật trạng thái hoạt động
         if (request.getIsActive() != null) {
             category.setIsActive(request.getIsActive());
         }
 
-        // cập nhật danh mục cha
         if (request.getParentId() != null) {
-
-            // tránh set parent là chính nó
             if (request.getParentId().equals(id)) {
                 throw new RuntimeException("Danh mục không thể là danh mục cha của chính nó");
             }
@@ -180,7 +157,6 @@ public class CategoryServiceImpl implements CategoryService {
             category.setParent(parent);
         }
 
-        // cập nhật slug
         String targetSlug = null;
 
         if (request.getSlug() != null) {
@@ -198,18 +174,16 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         Category saved = categoryRepository.save(category);
-
         return categoryResponseMapper.toDto(saved);
     }
 
-    // Xóa category
     @Override
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
 
         if (Boolean.FALSE.equals(category.getIsActive())) {
-            return; // đã ngừng hoạt động rồi thì bỏ qua
+            return;
         }
 
         category.setIsActive(false);
@@ -225,7 +199,6 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.save(category);
     }
 
-    // Lấy cây category
     @Override
     public List<CategoryTreeResponse> getCategoryTree() {
         List<Category> roots = categoryRepository.findByParentIsNullOrderByNameAsc();
@@ -236,7 +209,6 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     private CategoryTreeResponse buildTree(Category category) {
-
         CategoryTreeResponse node = CategoryTreeResponse.builder()
                 .id(category.getId())
                 .name(category.getName())
@@ -255,7 +227,6 @@ public class CategoryServiceImpl implements CategoryService {
         return node;
     }
 
-    // Lấy cây category nhưng chỉ lấy category đang hoạt động
     @Override
     public List<CategoryTreeResponse> getCategoryTreeActiveOnly() {
         List<Category> all = categoryRepository.findAll();
@@ -263,7 +234,6 @@ public class CategoryServiceImpl implements CategoryService {
         Map<Long, CategoryTreeResponse> map = new HashMap<>();
         List<CategoryTreeResponse> roots = new ArrayList<>();
 
-        // chỉ tạo node cho category đang hoạt động
         for (Category c : all) {
             if (Boolean.TRUE.equals(c.getIsActive())) {
                 map.put(c.getId(),
@@ -278,19 +248,15 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
 
-        // build cây
         for (Category c : all) {
             if (!Boolean.TRUE.equals(c.getIsActive())) continue;
 
             CategoryTreeResponse node = map.get(c.getId());
 
-            if (c.getParent() == null ||
-                    !map.containsKey(c.getParent().getId())) {
+            if (c.getParent() == null || !map.containsKey(c.getParent().getId())) {
                 roots.add(node);
             } else {
-                map.get(c.getParent().getId())
-                        .getChildren()
-                        .add(node);
+                map.get(c.getParent().getId()).getChildren().add(node);
             }
         }
 
@@ -309,7 +275,6 @@ public class CategoryServiceImpl implements CategoryService {
     private String toSlug(String input) {
         if (input == null) return null;
 
-        // bỏ dấu tiếng Việt và ký tự đặc biệt
         String normalized = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
                 .replace("đ", "d")
