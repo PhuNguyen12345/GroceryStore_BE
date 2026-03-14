@@ -35,7 +35,11 @@ public class InventoryTransaction {
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "warehouse_id")
+    private Warehouse warehouse;
 
     @OneToMany(mappedBy = "transaction")
     private Set<TransactionDetail> transactionDetails = new LinkedHashSet<>();
