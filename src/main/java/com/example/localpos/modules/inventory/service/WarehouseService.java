@@ -4,7 +4,6 @@ import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.modules.inventory.dto.warehouse.request.WarehouseCreateRequest;
 import com.example.localpos.modules.inventory.dto.warehouse.request.WarehouseUpdateRequest;
 import com.example.localpos.modules.inventory.dto.warehouse.response.WarehouseResponse;
-import org.springframework.data.domain.Pageable;
 
 public interface WarehouseService {
     public PageResponse<WarehouseResponse> getAllWarehouses(int page, int size);

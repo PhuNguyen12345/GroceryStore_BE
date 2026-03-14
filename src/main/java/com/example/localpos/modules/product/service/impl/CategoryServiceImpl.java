@@ -8,7 +8,6 @@ import com.example.localpos.modules.product.dto.response.CategoryTreeResponse;
 import com.example.localpos.modules.product.entity.Category;
 import com.example.localpos.modules.product.mapper.CategoryCreateRequestMapper;
 import com.example.localpos.modules.product.mapper.CategoryResponseMapper;
-import com.example.localpos.modules.product.mapper.CategoryUpdateRequestMapper;
 import com.example.localpos.modules.product.repository.CategoryRepository;
 import com.example.localpos.modules.product.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -30,9 +29,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     // Mapper dùng để chuyển request -> entity
     private final CategoryCreateRequestMapper categoryCreateRequestMapper;
-
-    // Mapper dùng để cập nhật entity
-    private final CategoryUpdateRequestMapper categoryUpdateRequestMapper;
 
     // Mapper dùng để chuyển entity -> response
     private final CategoryResponseMapper categoryResponseMapper;

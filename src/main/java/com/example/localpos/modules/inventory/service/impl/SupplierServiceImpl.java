@@ -2,7 +2,6 @@ package com.example.localpos.modules.inventory.service.impl;
 
 import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.modules.inventory.dto.supplier.request.SupplierCreateRequest;
-import com.example.localpos.modules.inventory.dto.supplier.request.SupplierRequest;
 import com.example.localpos.modules.inventory.dto.supplier.request.SupplierUpdateRequest;
 import com.example.localpos.modules.inventory.dto.supplier.response.SupplierResponse;
 import com.example.localpos.modules.inventory.entity.Supplier;

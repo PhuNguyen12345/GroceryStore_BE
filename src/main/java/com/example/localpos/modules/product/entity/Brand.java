@@ -3,7 +3,6 @@ package com.example.localpos.modules.product.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -28,6 +27,9 @@ public class Brand {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
+    @Column(name = "logo_url", length = 255)
+    private String logoUrl;
+
     @CreationTimestamp
     @Column(name = "created_at")
     private Instant createdAt;
@@ -47,6 +49,7 @@ public class Brand {
         return "Brand{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
+                ", logoUrl='" + logoUrl + '\'' +
                 ", isActive=" + isActive +
                 '}';
     }
