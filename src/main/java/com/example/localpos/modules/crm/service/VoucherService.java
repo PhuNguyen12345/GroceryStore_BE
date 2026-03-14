@@ -5,13 +5,13 @@ import com.example.localpos.enums.DiscountType;
 import com.example.localpos.modules.crm.dto.request.VoucherRequest;
 import com.example.localpos.modules.crm.dto.response.VoucherResponse;
 
+import java.math.BigDecimal;
+
 public interface VoucherService {
 
     VoucherResponse saveVoucher(VoucherRequest request);
 
     VoucherResponse getById(Long id);
-
-    VoucherResponse getByCode(String code);
 
     PageResponse<VoucherResponse> getAll(int page, int size);
 
@@ -22,6 +22,8 @@ public interface VoucherService {
     PageResponse<VoucherResponse> searchByCode(String keyword, int page, int size);
 
     PageResponse<VoucherResponse> searchByDescription(String keyword, int page, int size);
+
+    PageResponse<VoucherResponse> getApplicableVouchers(BigDecimal orderValue, int page, int size);
 
     void delete(Long id);
 

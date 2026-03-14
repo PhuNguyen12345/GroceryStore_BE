@@ -25,7 +25,7 @@ public class CustomerController {
     }
 
     // GET BY ID
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public CustomerResponse getCustomerById(@PathVariable Long id) {
         return customerService.getById(id);
     }
@@ -95,6 +95,18 @@ public class CustomerController {
         return customerService.searchByEmail(keyword, page, size);
     }
 
+    // SEARCH WITH FILTERS
+    @GetMapping("/search")
+    public PageResponse<CustomerResponse> searchCustomers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) CustomerTier tier,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return customerService.searchCustomers(keyword, isActive, tier, page, size);
+    }
+
     // SOFT DELETE
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCustomer(@PathVariable Long id) {
@@ -103,7 +115,7 @@ public class CustomerController {
     }
 
     // RESTORE
-    @PatchMapping("/{id}/restore")
+    @PutMapping("/{id}/restore")
     public ResponseEntity<String> restoreCustomer(@PathVariable Long id) {
         customerService.restore(id);
         return ResponseEntity.ok("Khôi phục khách hàng thành công");

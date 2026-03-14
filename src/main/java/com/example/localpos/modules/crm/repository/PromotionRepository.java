@@ -9,6 +9,8 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
     boolean existsByNameIgnoreCase(String name);
 
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
     Page<Promotion> findAllByIsActive(Boolean isActive, Pageable pageable);
 
     Page<Promotion> findAllByNameContainingIgnoreCase(String keyword, Pageable pageable);
