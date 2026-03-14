@@ -15,9 +15,9 @@ INSERT INTO customers (
 )
 SELECT
     '0901234567',
-    'Nguyen Van An',
+    'Nguyễn Văn An',
     'nguyenvanan@example.com',
-    '123 Le Loi, Quan 1, TP HCM',
+    '123 Lê Lợi, Quận 1, TP. HCM',
     120,
     'SILVER',
     '2026-01-15 08:30:00',
@@ -40,9 +40,9 @@ INSERT INTO customers (
 )
 SELECT
     '0912345678',
-    'Tran Thi Bich',
+    'Trần Thị Bích',
     'tranthibich@example.com',
-    '45 Nguyen Hue, Quan 1, TP HCM',
+    '45 Nguyễn Huệ, Quận 1, TP. HCM',
     340,
     'GOLD',
     '2025-12-20 10:15:00',
@@ -65,9 +65,9 @@ INSERT INTO customers (
 )
 SELECT
     '0923456789',
-    'Le Minh Khoa',
+    'Lê Minh Khoa',
     'leminhkhoa@example.com',
-    '78 Cach Mang Thang 8, Quan 3, TP HCM',
+    '78 Cách Mạng Tháng 8, Quận 3, TP. HCM',
     0,
     'BRONZE',
     '2026-02-05 11:00:00',
@@ -90,9 +90,9 @@ INSERT INTO customers (
 )
 SELECT
     '0934567890',
-    'Pham Thu Ha',
+    'Phạm Thu Hà',
     'phamthuha@example.com',
-    '12 Vo Van Tan, Quan 3, TP HCM',
+    '12 Võ Văn Tần, Quận 3, TP. HCM',
     780,
     'DIAMOND',
     '2025-10-01 07:45:00',
@@ -115,9 +115,9 @@ INSERT INTO customers (
 )
 SELECT
     '0945678901',
-    'Hoang Gia Bao',
+    'Hoàng Gia Bảo',
     'hoanggiabao@example.com',
-    '210 Phan Xich Long, Phu Nhuan, TP HCM',
+    '210 Phan Xích Long, Phú Nhuận, TP. HCM',
     60,
     'BRONZE',
     '2025-08-18 13:25:00',

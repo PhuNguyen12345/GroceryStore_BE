@@ -63,6 +63,7 @@ public class SecurityConfig {
                         // public - no token required
                         .requestMatchers(
                                 "/api/v1/**",
+                                "/uploads/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
