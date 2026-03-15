@@ -85,19 +85,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // public - no token required
                         .requestMatchers(
-                        new AntPathRequestMatcher("/api/auth/**"),
-                        new AntPathRequestMatcher("/api/v1/auth/**"),
-                        new AntPathRequestMatcher("/api/v1/products/**"),
-                        new AntPathRequestMatcher("/v3/api-docs/**"),
-                        new AntPathRequestMatcher("/swagger-ui/**"),
-                        new AntPathRequestMatcher("/swagger-ui.html"),
-                        new AntPathRequestMatcher("/error")
-                    ).permitAll()
-                    .requestMatchers(HttpMethod.POST,
-                        "/api/v1/auth/login",
-                        "/api/auth/login"
-                    ).permitAll()
-                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                new AntPathRequestMatcher("/api/v1/auth/login"),
+                                new AntPathRequestMatcher("/api/v1/products"),
+                                new AntPathRequestMatcher("/api/v1/products/**"),
+                                new AntPathRequestMatcher("/v3/api-docs/**"),
+                                new AntPathRequestMatcher("/swagger-ui/**"),
+                                new AntPathRequestMatcher("/swagger-ui.html"),
+                                new AntPathRequestMatcher("/error")
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/auth/login",
+                                "/api/auth/login"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         //  requires authentication
                         .anyRequest().authenticated()
                 )
