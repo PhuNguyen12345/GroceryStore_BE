@@ -5,7 +5,7 @@ import com.example.localpos.modules.product.dto.request.ProductCreateRequest;
 import com.example.localpos.modules.product.dto.request.ProductUpdateRequest;
 import com.example.localpos.modules.product.dto.response.ProductResponse;
 
-import java.awt.print.Pageable;
+
 
 public interface ProductService {
 

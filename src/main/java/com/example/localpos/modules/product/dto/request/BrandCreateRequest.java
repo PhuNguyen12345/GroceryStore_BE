@@ -20,5 +20,8 @@ public class BrandCreateRequest {
     @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
     private String description;
 
+    @Size(max = 255, message = "Logo URL không được vượt quá 255 ký tự")
+    private String logoUrl;
+
     private Boolean isActive;
 }

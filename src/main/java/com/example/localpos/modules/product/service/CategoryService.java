@@ -5,8 +5,7 @@ import com.example.localpos.modules.product.dto.request.CategoryCreateRequest;
 import com.example.localpos.modules.product.dto.request.CategoryUpdateRequest;
 import com.example.localpos.modules.product.dto.response.CategoryResponse;
 import com.example.localpos.modules.product.dto.response.CategoryTreeResponse;
-import com.example.localpos.modules.product.mapper.CategoryUpdateRequestMapper;
-import org.springframework.data.domain.Pageable;
+
 
 import java.util.List;
 

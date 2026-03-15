@@ -22,16 +22,19 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class BrandServiceImpl implements BrandService {
+
     private final BrandRepository brandRepository;
     private final BrandCreateRequestMapper brandCreateRequestMapper;
     private final BrandResponseMapper brandResponseMapper;
+
 
     @Override
     public PageResponse<BrandResponse> getAllBrands(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Brand> brandPage = brandRepository.findAllByOrderByNameAsc(pageable);
 
-        List<BrandResponse> responseList = brandPage.getContent().stream()
+        List<BrandResponse> responseList = brandPage.getContent()
+                .stream()
                 .map(brandResponseMapper::toDto)
                 .toList();
 
@@ -47,9 +50,10 @@ public class BrandServiceImpl implements BrandService {
     @Override
     public PageResponse<BrandResponse> findBrandsByName(String name, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Brand> brandPage = brandRepository.findByNameContainingIgnoreCase(name, pageable);
+        Page<Brand> brandPage = brandRepository.findByNameContainingIgnoreCase(name == null ? "" : name.trim(), pageable);
 
-        List<BrandResponse> responseList = brandPage.getContent().stream()
+        List<BrandResponse> responseList = brandPage.getContent()
+                .stream()
                 .map(brandResponseMapper::toDto)
                 .toList();
 
@@ -67,7 +71,8 @@ public class BrandServiceImpl implements BrandService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Brand> brandPage = brandRepository.findByIsActiveTrue(pageable);
 
-        List<BrandResponse> responseList = brandPage.getContent().stream()
+        List<BrandResponse> responseList = brandPage.getContent()
+                .stream()
                 .map(brandResponseMapper::toDto)
                 .toList();
 
@@ -82,15 +87,22 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     public BrandResponse addBrand(BrandCreateRequest request) {
-        Brand brand = brandCreateRequestMapper.toEntity(request);
+        String brandName = request.getName().trim();
 
-        // kiểm tra tên có bị trùng không
-        if (request.getName() != null && brandRepository.existsByNameIgnoreCase(request.getName())) {
+        if (brandRepository.existsByNameIgnoreCase(brandName)) {
             throw new IllegalArgumentException("Tên thương hiệu đã tồn tại");
         }
 
-        // mặc định isActive
-        if (brand.getIsActive() == null) brand.setIsActive(true);
+        Brand brand = brandCreateRequestMapper.toEntity(request);
+        brand.setName(brandName);
+
+        if (brand.getIsActive() == null) {
+            brand.setIsActive(true);
+        }
+
+        if (request.getLogoUrl() != null) {
+            brand.setLogoUrl(request.getLogoUrl());
+        }
 
         Brand saved = brandRepository.save(brand);
         return brandResponseMapper.toDto(saved);
@@ -101,21 +113,30 @@ public class BrandServiceImpl implements BrandService {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu"));
 
-        if (request.getName() != null) {
-            // kiểm tra trùng tên với thương hiệu khác
-            if (brandRepository.existsByNameIgnoreCase(request.getName())
-                    && !brand.getName().equalsIgnoreCase(request.getName())) {
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            String newName = request.getName().trim();
+
+            if (brandRepository.existsByNameIgnoreCaseAndIdNot(newName, id)) {
                 throw new IllegalArgumentException("Tên thương hiệu đã tồn tại");
             }
-            brand.setName(request.getName());
+
+            brand.setName(newName);
         }
 
         if (request.getDescription() != null) {
             brand.setDescription(request.getDescription());
         }
 
+        if (request.getLogoUrl() != null) {
+            brand.setLogoUrl(request.getLogoUrl());
+        }
+
         if (request.getIsActive() != null) {
             brand.setIsActive(request.getIsActive());
+        }
+
+        if (request.getLogoUrl() != null && !request.getLogoUrl().trim().isBlank()) {
+            brand.setLogoUrl(request.getLogoUrl().trim());
         }
 
         Brand saved = brandRepository.save(brand);
@@ -127,7 +148,9 @@ public class BrandServiceImpl implements BrandService {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu"));
 
-        if (Boolean.FALSE.equals(brand.getIsActive())) return;
+        if (Boolean.FALSE.equals(brand.getIsActive())) {
+            return;
+        }
 
         brand.setIsActive(false);
         brandRepository.save(brand);
@@ -137,6 +160,10 @@ public class BrandServiceImpl implements BrandService {
     public void restoreBrand(Long id) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thương hiệu"));
+
+        if (Boolean.TRUE.equals(brand.getIsActive())) {
+            return;
+        }
 
         brand.setIsActive(true);
         brandRepository.save(brand);
