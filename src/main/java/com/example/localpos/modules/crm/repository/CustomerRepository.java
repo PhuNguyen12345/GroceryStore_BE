@@ -1,6 +1,8 @@
 package com.example.localpos.modules.crm.repository;
 
 import com.example.localpos.enums.CustomerTier;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,5 +23,25 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Page<Customer> findAllByPhoneContaining(String keyword, Pageable pageable);
 
     Page<Customer> findAllByEmailContainingIgnoreCase(String keyword, Pageable pageable);
+
+    @Query("""
+            SELECT c
+            FROM Customer c
+            WHERE (:isActive IS NULL OR c.isActive = :isActive)
+              AND (:tier IS NULL OR c.customerTier = :tier)
+              AND (
+                    :keyword IS NULL
+                    OR :keyword = ''
+                    OR LOWER(c.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR c.phone LIKE CONCAT('%', :keyword, '%')
+                    OR LOWER(c.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                  )
+            """)
+    Page<Customer> searchCustomers(
+            @Param("keyword") String keyword,
+            @Param("isActive") Boolean isActive,
+            @Param("tier") CustomerTier tier,
+            Pageable pageable
+    );
 
 }

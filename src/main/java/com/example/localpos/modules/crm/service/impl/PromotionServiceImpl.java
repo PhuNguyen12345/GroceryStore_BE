@@ -14,7 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-
 import java.util.List;
 
 @Service
@@ -26,30 +25,39 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Override
     public PromotionResponse savePromotion(PromotionRequest request) {
+        // Validate request body.
         if (request == null) {
             throw new RuntimeException("Dữ liệu khuyến mãi không được để trống");
         }
 
+        // Ensure promotion date range is valid.
+        if (request.getStartDate() != null && request.getEndDate() != null) {
+            if (!request.getStartDate().isBefore(request.getEndDate())) {
+                throw new IllegalArgumentException("Ngày bắt đầu phải nhỏ hơn ngày kết thúc");
+            }
+        }
+
         Promotion promotion;
 
-        // UPDATE
         if (request.getId() != null) {
+            // Update existing promotion.
             promotion = promotionRepository.findById(request.getId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi"));
 
             if (request.getName() != null && !request.getName().trim().isBlank()) {
                 String newName = request.getName().trim();
 
-                if (!newName.equalsIgnoreCase(promotion.getName())) {
-                    if (promotionRepository.existsByNameIgnoreCase(newName)) {
-                        throw new RuntimeException("Tên khuyến mãi đã tồn tại");
-                    }
-                    promotion.setName(newName);
+                // Reject name if it belongs to another promotion.
+                if (!newName.equalsIgnoreCase(promotion.getName())
+                        && promotionRepository.existsByNameIgnoreCaseAndIdNot(newName, promotion.getId())) {
+                    throw new RuntimeException("Tên khuyến mãi đã tồn tại");
                 }
+
+                promotion.setName(newName);
             }
 
         } else {
-            // CREATE
+            // Create new promotion with unique name.
             if (request.getName() == null || request.getName().trim().isBlank()) {
                 throw new RuntimeException("Tên khuyến mãi không được để trống");
             }
@@ -61,12 +69,12 @@ public class PromotionServiceImpl implements PromotionService {
             }
 
             promotion = new Promotion();
+            // Copy request fields except values handled manually below.
             BeanUtils.copyProperties(request, promotion, "id", "name", "bannerUrl");
             promotion.setName(newName);
-
-            // xử lý ảnh giống product
             promotion.setBannerUrl(request.getBannerUrl());
 
+            // Default promotion status to active when missing.
             if (promotion.getIsActive() == null) {
                 promotion.setIsActive(true);
             }
@@ -79,7 +87,6 @@ public class PromotionServiceImpl implements PromotionService {
             promotion.setDescription(request.getDescription());
         }
 
-        // xử lý ảnh giống product
         if (request.getBannerUrl() != null && !request.getBannerUrl().trim().isBlank()) {
             promotion.setBannerUrl(request.getBannerUrl().trim());
         }
@@ -130,7 +137,10 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     public PageResponse<PromotionResponse> filterByIsActive(Boolean isActive, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Promotion> promotionPage = promotionRepository.findAllByIsActive(isActive, pageable);
+        // Return all promotions when no active filter is provided.
+        Page<Promotion> promotionPage = (isActive == null)
+                ? promotionRepository.findAll(pageable)
+                : promotionRepository.findAllByIsActive(isActive, pageable);
 
         List<PromotionResponse> responses = promotionPage.getContent()
                 .stream()
@@ -149,7 +159,10 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     public PageResponse<PromotionResponse> searchByName(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Promotion> promotionPage = promotionRepository.findAllByNameContainingIgnoreCase(keyword, pageable);
+        // Fallback to full list when search keyword is empty.
+        Page<Promotion> promotionPage = (keyword == null || keyword.trim().isBlank())
+                ? promotionRepository.findAll(pageable)
+                : promotionRepository.findAllByNameContainingIgnoreCase(keyword.trim(), pageable);
 
         List<PromotionResponse> responses = promotionPage.getContent()
                 .stream()
@@ -167,6 +180,7 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Override
     public void delete(Long id) {
+        // Soft delete by switching active status off.
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi"));
 
@@ -180,6 +194,7 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Override
     public void restore(Long id) {
+        // Restore promotion by switching active status on.
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi"));
 

@@ -12,14 +12,17 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    //Catch exceptions from Validation
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<Map<String,String>> handleValidationException(MethodArgumentNotValidException ex){
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
+        //get errors from BindingResult
+        ex.getBindingResult().getAllErrors().forEach((error)->{
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
+            errors.put(fieldName,errorMessage);
         });
+        //return 400 with errors
         return ResponseEntity.badRequest().body(errors);
     }
 
