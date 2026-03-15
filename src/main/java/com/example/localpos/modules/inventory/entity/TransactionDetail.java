@@ -1,13 +1,17 @@
 package com.example.localpos.modules.inventory.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "transaction_details")
+@AllArgsConstructor
+@NoArgsConstructor
 public class TransactionDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

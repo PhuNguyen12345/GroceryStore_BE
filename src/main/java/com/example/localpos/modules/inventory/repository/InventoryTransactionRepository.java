@@ -13,14 +13,4 @@ import java.util.List;
 @Repository
 public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction,Long>,
         JpaSpecificationExecutor<InventoryTransaction> {
-
-    @Query("SELECT b from InventoryBatch b " +
-            "WHERE b.warehouse.id = :warehouseId " +
-            "AND b.productUnit.id = :productUnitId " +
-            "AND b.quantityAvailable > 0 " +
-            "ORDER BY b.expiryDate ASC, b.createdAt ASC")
-    List<InventoryBatch> findAvailableBatchesForExport(
-            @Param("warehouseId") Long warehouseId,
-            @Param("productUnitId") Long productUnitId
-    );
 }

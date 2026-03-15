@@ -17,6 +17,7 @@ public class ApiPaths {
         public static final String WAREHOUSE = API_VERSION + "/warehouses";
         public static final String BATCH =  API_VERSION + "/inventory/batches";
         public static final String TRANSACTION =  API_VERSION + "/inventory/transactions";
+        public static final String STOCK =  API_VERSION + "/inventory/stocks";
     }
 
     // --- CRM MODULE ---

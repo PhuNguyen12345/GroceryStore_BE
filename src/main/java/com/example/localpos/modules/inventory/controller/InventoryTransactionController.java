@@ -2,10 +2,12 @@ package com.example.localpos.modules.inventory.controller;
 
 import com.example.localpos.common.constants.ApiPaths;
 import com.example.localpos.common.response.PageResponse;
+import com.example.localpos.modules.inventory.dto.transaction.exports.request.ExportReceiptRequest;
 import com.example.localpos.modules.inventory.dto.transaction.imports.request.ImportReceiptRequest;
 import com.example.localpos.modules.inventory.dto.transaction.imports.response.ImportReceiptResponse;
 import com.example.localpos.modules.inventory.dto.transaction.summary.details.TransactionDetailResponse;
 import com.example.localpos.modules.inventory.dto.transaction.summary.response.TransactionSummaryResponse;
+import com.example.localpos.modules.inventory.service.InventoryExportService;
 import com.example.localpos.modules.inventory.service.InventoryImportService;
 import com.example.localpos.modules.inventory.service.InventoryTransactionService;
 import jakarta.validation.Valid;
@@ -27,11 +29,20 @@ public class InventoryTransactionController {
 
     private final InventoryImportService  inventoryImportService;
     private final InventoryTransactionService inventoryTransactionService;
+    private final InventoryExportService  inventoryExportService;
 
     @PostMapping("/import")
     public ResponseEntity<ImportReceiptResponse> importGoods(@Valid @RequestBody ImportReceiptRequest request){
         //call service
         ImportReceiptResponse response = inventoryImportService.importGoods(request);
+        //return
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/export")
+    public ResponseEntity<ImportReceiptResponse> exportGoods(@Valid @RequestBody ExportReceiptRequest request){
+        //call service
+        ImportReceiptResponse response = inventoryExportService.exportGoods(request);
         //return
         return ResponseEntity.ok(response);
     }
