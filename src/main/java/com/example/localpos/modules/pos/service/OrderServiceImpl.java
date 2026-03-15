@@ -2,17 +2,22 @@ package com.example.localpos.modules.pos.service;
 
 import com.example.localpos.enums.OrderStatus;
 import com.example.localpos.enums.PaymentMethod;
+import com.example.localpos.enums.PaymentStatus;
 import com.example.localpos.modules.crm.repository.CustomerRepository;
+import com.example.localpos.modules.crm.repository.VoucherRepository;
 import com.example.localpos.modules.hr.repository.EmployeeRepository;
 import com.example.localpos.modules.inventory.entity.InventoryBatch;
 import com.example.localpos.modules.pos.dto.request.CartItemRequest;
 import com.example.localpos.modules.pos.dto.request.CheckoutRequest;
 import com.example.localpos.modules.pos.dto.request.OrderRequest;
+import com.example.localpos.modules.pos.dto.response.CheckoutResponse;
 import com.example.localpos.modules.pos.entity.Order;
 import com.example.localpos.modules.pos.entity.OrderDetail;
 import com.example.localpos.modules.inventory.repository.InventoryBatchRepository;
+import com.example.localpos.modules.pos.entity.Payment;
 import com.example.localpos.modules.pos.repository.OrderDetailRepository;
 import com.example.localpos.modules.pos.repository.OrderRepository;
+import com.example.localpos.modules.pos.repository.PaymentRepository;
 import com.example.localpos.modules.product.repository.ProductUnitRepository;
 import com.example.localpos.modules.product.entity.ProductUnit;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +40,9 @@ public class OrderServiceImpl implements OrderService {
     private final OrderDetailRepository orderDetailRepository;
     private final ProductUnitRepository productUnitRepository;
     private final InventoryBatchRepository inventoryBatchRepository;
-
+    private final PaymentRepository paymentRepository;
+    private final VietQrService vietQrService;
+    private final VoucherRepository voucherRepository;
     @Override
     @Transactional
     public Order createNewOrder(OrderRequest request) {
@@ -128,6 +135,44 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
+    public CheckoutResponse checkout(Long orderId, CheckoutRequest request) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        if(request.getVoucherId() != null){
+
+            var voucher = voucherRepository.findById(request.getVoucherId())
+                    .orElseThrow(() -> new RuntimeException("Voucher not found"));
+
+            order.setVoucher(voucher);
+
+            order.setDiscountAmount(voucher.getDiscountValue());
+
+            order.setFinalAmount(order.getTotalAmount().subtract(voucher.getDiscountValue()));
+
+            orderRepository.save(order);
+        }
+        if (order.getStatus() == OrderStatus.COMPLETED) {
+            throw new RuntimeException("Order already paid");
+        }
+
+        if (request.getPaymentMethod() == PaymentMethod.CASH) {
+
+            return processCash(order);
+
+        }
+
+        if (request.getPaymentMethod() == PaymentMethod.QR_CODE) {
+
+            return processBankQr(order);
+
+        }
+
+        throw new RuntimeException("Unsupported payment method");
+    }
+
+    @Override
+    @Transactional
     public Order removeItem(Long orderId, Long productUnitId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
@@ -144,32 +189,7 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.save(order);
     }
 
-    @Override
-    @Transactional
-    public Order checkout(Long orderId, CheckoutRequest request) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
 
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("Đơn hàng này đã được xử lý trước đó.");
-        }
-
-        if (order.getOrderDetails().isEmpty()) {
-            throw new RuntimeException("Đơn hàng trống, không thể thanh toán.");
-        }
-
-        // 1. Logic Trừ Kho (Inventory)
-        for (OrderDetail detail : order.getOrderDetails()) {
-            deductInventory(detail.getProductUnit(), detail.getQuantity());
-        }
-
-        // 2. Cập nhật thông tin đơn hàng
-        order.setPaymentMethod(request.getPaymentMethod());
-        order.setStatus(OrderStatus.COMPLETED); // Đổi trạng thái sang hoàn tất
-
-
-        return orderRepository.save(order);
-    }
 
     @Override
     public Order getOrderById(Long id) {
@@ -202,6 +222,65 @@ public class OrderServiceImpl implements OrderService {
             // Ở đây tôi throw lỗi để đảm bảo tính chính xác
             throw new RuntimeException("Sản phẩm " + unit.getUnitName() + " không đủ tồn kho!");
         }
+    }
+
+    private CheckoutResponse processCash(Order order) {
+
+        Payment payment = new Payment();
+
+        payment.setOrder(order);
+        payment.setAmount(order.getTotalAmount());
+        payment.setPaymentMethod(PaymentMethod.CASH);
+        payment.setStatus(PaymentStatus.SUCCESS);
+
+        paymentRepository.save(payment);
+
+        order.setStatus(OrderStatus.COMPLETED);
+
+        orderRepository.save(order);
+
+        return CheckoutResponse.builder()
+                .status("SUCCESS")
+                .message("Cash payment completed")
+                .build();
+    }
+
+    private CheckoutResponse processBankQr(Order order) {
+
+        BigDecimal amount;
+
+        if(order.getVoucher() != null){
+
+            amount = order.getTotalAmount()
+                    .subtract(order.getVoucher().getDiscountValue());
+
+            order.setDiscountAmount(order.getVoucher().getDiscountValue());
+            order.setFinalAmount(amount);
+
+        } else {
+
+            amount = order.getTotalAmount();
+            order.setFinalAmount(amount);
+
+        }
+
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setAmount(amount);
+        payment.setPaymentMethod(PaymentMethod.QR_CODE);
+        payment.setStatus(PaymentStatus.PENDING);
+
+        paymentRepository.save(payment);
+
+        orderRepository.save(order);
+
+        String qrUrl = vietQrService.generateQr(amount).getQrUrl();
+
+        return CheckoutResponse.builder()
+                .status("PENDING")
+                .qrUrl(qrUrl)
+                .message("Scan QR to pay")
+                .build();
     }
 
     private void recalculateOrderFinancials(Order order) {
