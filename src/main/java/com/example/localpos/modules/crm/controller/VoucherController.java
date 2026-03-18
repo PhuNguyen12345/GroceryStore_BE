@@ -6,6 +6,8 @@ import com.example.localpos.enums.DiscountType;
 import com.example.localpos.modules.crm.dto.request.VoucherRequest;
 import com.example.localpos.modules.crm.dto.response.VoucherResponse;
 import com.example.localpos.modules.crm.service.VoucherService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +23,7 @@ public class VoucherController {
 
     // CREATE, UPDATE
     @PostMapping
-    public ResponseEntity<String> savedVoucher(@RequestBody VoucherRequest request) {
+    public ResponseEntity<String> savedVoucher(@Valid @RequestBody VoucherRequest request) {
         voucherService.saveVoucher(request);
         return ResponseEntity.ok("Lưu mã giảm giá thành công");
     }

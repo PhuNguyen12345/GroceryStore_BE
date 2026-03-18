@@ -6,6 +6,8 @@ import com.example.localpos.enums.CustomerTier;
 import com.example.localpos.modules.crm.dto.request.CustomerRequest;
 import com.example.localpos.modules.crm.dto.response.CustomerResponse;
 import com.example.localpos.modules.crm.service.CustomerService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +21,7 @@ public class CustomerController {
 
     // CREATE, UPDATE
     @PostMapping
-    public ResponseEntity<String> saveCustomer(@RequestBody CustomerRequest request) {
+    public ResponseEntity<String> saveCustomer(@Valid @RequestBody CustomerRequest request) {
         customerService.saveCustomer(request);
         return ResponseEntity.ok("Lưu khách hàng thành công");
     }
