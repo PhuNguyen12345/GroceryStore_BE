@@ -33,24 +33,13 @@ public interface ShiftService {
 
     // Time-based lookups
 
-    /**
-     * Returns shifts that start at or after {@code time}.
-     */
+
     List<ShiftResponseDTO> findStartingFrom(LocalTime time);
 
-    /**
-     * Returns shifts that end at or before {@code time}.
-     */
     List<ShiftResponseDTO> findEndingBefore(LocalTime time);
 
-    /**
-     * Returns shifts whose window overlaps the given [startTime, endTime] range.
-     */
     List<ShiftResponseDTO> findOverlapping(LocalTime startTime, LocalTime endTime);
 
-    /**
-     * Returns shifts that are active at the given point in time.
-     */
     List<ShiftResponseDTO> findActiveAt(LocalTime time);
 
     // Status helpers
