@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping(ApiPaths.CRMCtrl.VOUCHER)
 @RequiredArgsConstructor
@@ -28,12 +30,6 @@ public class VoucherController {
     @GetMapping("/{id}")
     public VoucherResponse getVoucherById(@PathVariable Long id) {
         return voucherService.getById(id);
-    }
-
-    // GET BY CODE
-    @GetMapping("/code/{code}")
-    public VoucherResponse getVoucherByCode(@PathVariable String code) {
-        return voucherService.getByCode(code);
     }
 
     // GET ALL
@@ -85,6 +81,16 @@ public class VoucherController {
         return voucherService.searchByDescription(keyword, page, size);
     }
 
+    // GET APPLICABLE VOUCHERS FOR CHECKOUT
+    @GetMapping("/applicable")
+    public PageResponse<VoucherResponse> getApplicableVouchers(
+            @RequestParam BigDecimal orderValue,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return voucherService.getApplicableVouchers(orderValue, page, size);
+    }
+
     // SOFT DELETE
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteVoucher(@PathVariable Long id) {
@@ -93,7 +99,7 @@ public class VoucherController {
     }
 
     // RESTORE
-    @PatchMapping("/{id}/restore")
+    @PutMapping("/{id}/restore")
     public ResponseEntity<String> restoreVoucher(@PathVariable Long id) {
         voucherService.restore(id);
         return ResponseEntity.ok("Khôi phục mã giảm giá thành công");

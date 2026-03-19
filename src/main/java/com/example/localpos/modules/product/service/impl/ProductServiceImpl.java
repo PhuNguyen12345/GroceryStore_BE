@@ -3,13 +3,11 @@ package com.example.localpos.modules.product.service.impl;
 import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.modules.product.dto.request.ProductCreateRequest;
 import com.example.localpos.modules.product.dto.request.ProductUpdateRequest;
-import com.example.localpos.modules.product.dto.response.CategoryResponse;
 import com.example.localpos.modules.product.dto.response.ProductResponse;
 import com.example.localpos.modules.product.entity.Category;
 import com.example.localpos.modules.product.entity.Product;
 import com.example.localpos.modules.product.mapper.ProductCreateRequestMapper;
 import com.example.localpos.modules.product.mapper.ProductResponseMapper;
-import com.example.localpos.modules.product.mapper.ProductUpdateRequestMapper;
 import com.example.localpos.modules.product.repository.BrandRepository;
 import com.example.localpos.modules.product.repository.CategoryRepository;
 import com.example.localpos.modules.product.repository.ProductRepository;
@@ -32,7 +30,6 @@ public class ProductServiceImpl implements ProductService {
     private final BrandRepository brandRepository;
 
     private final ProductCreateRequestMapper createRequestMapper;
-    private final ProductUpdateRequestMapper updateRequestMapper;
     private final ProductResponseMapper productResponseMapper;
 
     @Override

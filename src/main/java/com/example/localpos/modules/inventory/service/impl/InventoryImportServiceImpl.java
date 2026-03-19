@@ -43,6 +43,8 @@ public class InventoryImportServiceImpl implements InventoryImportService {
         InventoryTransaction transaction = new InventoryTransaction();
         //set items
         transaction.setTransactionType(InventoryTransactionType.IMPORT);
+        //set warehouse
+        transaction.setWarehouse(warehouse);
         //set employee
         transaction.setEmployee(employee);
         //set note

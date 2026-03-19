@@ -20,6 +20,8 @@ public class BrandResponse {
 
     private String description;
 
+    private String logoUrl;
+
     private Boolean isActive;
 
     private Instant createdAt;

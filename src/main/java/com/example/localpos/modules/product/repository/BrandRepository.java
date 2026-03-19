@@ -19,4 +19,6 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
 
     // check trùng tên (để validate create/update)
     boolean existsByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
 }

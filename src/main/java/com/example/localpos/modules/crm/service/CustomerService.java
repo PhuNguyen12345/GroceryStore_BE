@@ -33,6 +33,15 @@ public interface CustomerService {
 
     PageResponse<CustomerResponse> searchByEmail(String keyword, int page, int size);
 
+    // search with filters
+    PageResponse<CustomerResponse> searchCustomers(
+            String keyword,
+            Boolean isActive,
+            CustomerTier tier,
+            int page,
+            int size
+    );
+
     // soft delete
     void delete(Long id);
 

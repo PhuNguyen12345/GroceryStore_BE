@@ -5,6 +5,8 @@ import com.example.localpos.enums.PaymentMethod;
 import com.example.localpos.modules.crm.entity.Customer;
 import com.example.localpos.modules.crm.entity.Voucher;
 import com.example.localpos.modules.hr.entity.Employee;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,6 +40,7 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
+    @JsonIgnoreProperties({"orders", "passwordHash", "inventoryTransactions", "hibernateLazyInitializer", "handler"})
     private Employee employee;
 
     @Column(name = "total_amount", nullable = false, precision = 15, scale = 2)
@@ -70,6 +73,7 @@ public class Order {
     private String voucherCode;
 
     @OneToMany(mappedBy = "order")
+    @JsonManagedReference
     private Set<OrderDetail> orderDetails = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "order")
