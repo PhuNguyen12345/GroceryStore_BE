@@ -17,6 +17,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -32,7 +34,28 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
+        return new PasswordEncoder() {
+            @Override
+            public String encode(CharSequence rawPassword) {
+                return bcrypt.encode(rawPassword);
+            }
+
+            @Override
+            public boolean matches(CharSequence rawPassword, String storedPassword) {
+                if (storedPassword == null) {
+                    return false;
+                }
+
+                if (storedPassword.startsWith("$2a$")
+                        || storedPassword.startsWith("$2b$")
+                        || storedPassword.startsWith("$2y$")) {
+                    return bcrypt.matches(rawPassword, storedPassword);
+                }
+
+                return rawPassword.toString().equals(storedPassword);
+            }
+        };
     }
 
     @Bean
@@ -62,12 +85,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // public - no token required
                         .requestMatchers(
-                                "/api/v1/**",
-                                "/uploads/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                new AntPathRequestMatcher("/api/v1/auth/login"),
+                                new AntPathRequestMatcher("/api/v1/products"),
+                                new AntPathRequestMatcher("/api/v1/products/**"),
+                                new AntPathRequestMatcher("/v3/api-docs/**"),
+                                new AntPathRequestMatcher("/swagger-ui/**"),
+                                new AntPathRequestMatcher("/swagger-ui.html"),
+                                new AntPathRequestMatcher("/error")
                         ).permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/auth/login",
+                                "/api/auth/login"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         //  requires authentication
                         .anyRequest().authenticated()
                 )
@@ -85,13 +115,16 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // Cho phép Frontend từ đâu gọi vào? (React thường chạy port 3000)
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*"));
 
         // Cho phép các method nào?
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
         // Cho phép các header nào?
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // Expose Authorization header so frontend can read JWT in responses when needed
+        configuration.setExposedHeaders(List.of("Authorization"));
 
         // Cho phép gửi credentials (nếu cần cookie/auth header)
         configuration.setAllowCredentials(true);

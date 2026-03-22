@@ -22,16 +22,16 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
-    private static final String BEARER_PREFIX        = "Bearer ";
+    private static final String BEARER_PREFIX = "Bearer ";
 
-    private final JwtService        jwtService;
+    private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
-            @NonNull HttpServletRequest  request,
+            @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain         filterChain
+            @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
         final String authHeader = request.getHeader(AUTHORIZATION_HEADER);
@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String jwt      = authHeader.substring(BEARER_PREFIX.length());
+        final String jwt = authHeader.substring(BEARER_PREFIX.length());
         final String username;
 
         try {
