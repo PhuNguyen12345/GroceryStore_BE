@@ -31,14 +31,6 @@ public interface EmployeeService {
 
     List<EmployeeResponseDTO> findAll();
 
-    /**
-     * Paginated, filterable search.
-     *
-     * @param keyword  optional free-text filter (username / fullName / email)
-     * @param role     optional role filter
-     * @param isActive optional active-status filter
-     * @param pageable pagination & sorting info
-     */
     Page<EmployeeResponseDTO> search(String keyword, EmployeeRole role, Boolean isActive, Pageable pageable);
 
     List<EmployeeResponseDTO> findByFullName(String fullName);

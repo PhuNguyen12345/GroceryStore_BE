@@ -21,13 +21,13 @@ public class EmployeeUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Employee employee = employeeRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Employee not found: " + username));
+            .orElseThrow(() -> new UsernameNotFoundException("Employee not found: " + username));
 
         return User.builder()
-                .username(employee.getUsername())
-                .password(employee.getPasswordHash())
-                .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + employee.getRole().name())))
-                .accountLocked(!employee.getIsActive())
-                .build();
+            .username(employee.getUsername())
+            .password(employee.getPasswordHash())
+            .disabled(Boolean.FALSE.equals(employee.getIsActive()))
+            .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + employee.getRole().name())))
+            .build();
     }
 }

@@ -19,7 +19,7 @@ public class AuthResponseDTO {
     @Builder.Default
     private String tokenType = "Bearer";
 
-    private Long   employeeId;
+    private Long employeeId;
     private String username;
     private String fullName;
     private EmployeeRole role;
