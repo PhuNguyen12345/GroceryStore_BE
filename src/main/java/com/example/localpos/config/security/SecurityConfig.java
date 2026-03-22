@@ -87,7 +87,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 new AntPathRequestMatcher("/api/v1/auth/login"),
                                 new AntPathRequestMatcher("/api/v1/products"),
+                                new AntPathRequestMatcher("/uploads/images/**"),
                                 new AntPathRequestMatcher("/api/v1/products/**"),
+                                new AntPathRequestMatcher("/api/v1/customers/**"),
+                                new AntPathRequestMatcher("/api/v1/vouchers/**"),
+                                new AntPathRequestMatcher("/api/v1/promotions/**"),
                                 new AntPathRequestMatcher("/v3/api-docs/**"),
                                 new AntPathRequestMatcher("/swagger-ui/**"),
                                 new AntPathRequestMatcher("/swagger-ui.html"),
