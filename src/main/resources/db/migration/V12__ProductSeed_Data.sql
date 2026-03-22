@@ -299,6 +299,65 @@ INSERT INTO categories (name, parent_id, slug, description, is_active)
 SELECT 'Há cảo / bánh bao đông lạnh', id, 'ha-cao-banh-bao-dong-lanh', 'Các loại há cảo và bánh bao đông lạnh', 1
 FROM categories WHERE slug = 'do-dong-lanh';
 
+#
+# SET @logo_url_column_exists = (
+#     SELECT COUNT(*)
+#     FROM information_schema.COLUMNS
+#     WHERE TABLE_SCHEMA = DATABASE()
+#       AND TABLE_NAME = 'brands'
+#       AND COLUMN_NAME = 'logo_url'
+# );
+#
+# SET @add_logo_url_column_sql = IF(
+#     @logo_url_column_exists = 0,
+#     'ALTER TABLE brands ADD COLUMN logo_url VARCHAR(255)',
+#     'SELECT 1'
+# );
+#
+# PREPARE add_logo_url_column_stmt FROM @add_logo_url_column_sql;
+# EXECUTE add_logo_url_column_stmt;
+# DEALLOCATE PREPARE add_logo_url_column_stmt;
+#
+# INSERT INTO categories (id, name, slug, description, is_active)
+# SELECT ref.id,
+#        CONCAT('Seed Category #', ref.id),
+#        CONCAT('seed-category-', ref.id),
+#        'Auto-generated placeholder for V12 compatibility',
+#        1
+# FROM (
+#          SELECT 10 AS id UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14
+#          UNION ALL SELECT 15 UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19
+#          UNION ALL SELECT 20 UNION ALL SELECT 22 UNION ALL SELECT 23 UNION ALL SELECT 24 UNION ALL SELECT 25
+#          UNION ALL SELECT 27 UNION ALL SELECT 28 UNION ALL SELECT 30 UNION ALL SELECT 31 UNION ALL SELECT 32
+#          UNION ALL SELECT 37 UNION ALL SELECT 38 UNION ALL SELECT 39 UNION ALL SELECT 40 UNION ALL SELECT 42
+#          UNION ALL SELECT 43 UNION ALL SELECT 45 UNION ALL SELECT 46 UNION ALL SELECT 49 UNION ALL SELECT 52
+#          UNION ALL SELECT 53 UNION ALL SELECT 54 UNION ALL SELECT 55 UNION ALL SELECT 60 UNION ALL SELECT 61
+#          UNION ALL SELECT 62 UNION ALL SELECT 67 UNION ALL SELECT 68 UNION ALL SELECT 71
+#      ) ref
+# LEFT JOIN categories c ON c.id = ref.id
+# WHERE c.id IS NULL;
+#
+# INSERT INTO brands (id, name, description, logo_url, is_active)
+# SELECT ref.id,
+#        CONCAT('Seed Brand #', ref.id),
+#        'Auto-generated placeholder for V12 compatibility',
+#        '/uploads/images/placeholder-brand.png',
+#        1
+# FROM (
+#          SELECT 1 AS id UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
+#          UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 13
+#          UNION ALL SELECT 14 UNION ALL SELECT 15 UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18
+#          UNION ALL SELECT 21 UNION ALL SELECT 23 UNION ALL SELECT 25 UNION ALL SELECT 26 UNION ALL SELECT 28
+#          UNION ALL SELECT 29 UNION ALL SELECT 31 UNION ALL SELECT 33 UNION ALL SELECT 35 UNION ALL SELECT 38
+#          UNION ALL SELECT 40 UNION ALL SELECT 42 UNION ALL SELECT 43 UNION ALL SELECT 44 UNION ALL SELECT 45
+#          UNION ALL SELECT 46 UNION ALL SELECT 49 UNION ALL SELECT 51 UNION ALL SELECT 52 UNION ALL SELECT 54
+#          UNION ALL SELECT 55 UNION ALL SELECT 56 UNION ALL SELECT 57 UNION ALL SELECT 58 UNION ALL SELECT 59
+#          UNION ALL SELECT 60 UNION ALL SELECT 61 UNION ALL SELECT 63 UNION ALL SELECT 64
+#      ) ref
+# LEFT JOIN brands b ON b.id = ref.id
+# WHERE b.id IS NULL;
+
+
 
 INSERT INTO brands (name, description, logo_url, is_active) VALUES
                                                                 ('Aquafina', 'Thương hiệu nước uống đóng chai của PepsiCo', '/uploads/images/logo_aquafina.jpg', 1),

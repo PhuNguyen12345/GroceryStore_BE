@@ -91,7 +91,11 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/v3/api-docs/**"),
                                 new AntPathRequestMatcher("/swagger-ui/**"),
                                 new AntPathRequestMatcher("/swagger-ui.html"),
-                                new AntPathRequestMatcher("/error")
+                                new AntPathRequestMatcher("/error"),
+                                new AntPathRequestMatcher("/api/v1/categories/tree/active"),
+                                new AntPathRequestMatcher("/api/v1/promotions/filter/active"),
+                                new AntPathRequestMatcher("/api/v1/brands/**"),
+                                new AntPathRequestMatcher("/api/v1/categories/**")
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/auth/login",
