@@ -11,4 +11,5 @@ public interface SupplierService {
     public SupplierResponse updateSupplier(Long id, SupplierUpdateRequest supplierRequest);
     public PageResponse<SupplierResponse> findSuppliersByName(String supplierName, int page, int size);
     void deleteSupplier(Long id);
+    SupplierResponse restoreSupplier(Long id);
 }

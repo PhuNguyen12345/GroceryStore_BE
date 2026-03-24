@@ -37,11 +37,9 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public PageResponse<WarehouseResponse> getAllWarehouses(int page, int size) {
-        //define pageable
         Pageable pageable = PageRequest.of(page, size);
-        //Query to get all warehouses
         Page<Warehouse> warehousePage = warehouseRepository.findAll(pageable);
-        //map to PageResponse
+
         List<WarehouseResponse> responseList = warehousePage.getContent().stream()
                 .map(warehouse -> new WarehouseResponse(
                         warehouse.getId(),
@@ -50,7 +48,6 @@ public class WarehouseServiceImpl implements WarehouseService {
                         warehouse.getIsActive()
                 )).toList();
 
-        //return PageResposne
         return PageResponse.<WarehouseResponse>builder()
                 .content(responseList)
                 .page(warehousePage.getNumber())
@@ -62,35 +59,27 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public WarehouseResponse addWarehouse(WarehouseCreateRequest warehouseCreateRequest) {
-        //Map request to entity
         Warehouse warehouse = createMapper.toEntity(warehouseCreateRequest);
-        //log data
         log.info("Converted create request: {}", warehouse);
-        //save to db
+
         Warehouse savedWarehouse = warehouseRepository.save(warehouse);
-        //log saved warehouse
         log.info("Warehouse saved: {}", savedWarehouse);
-        //map saved warehouse to response
+
         WarehouseResponse warehouseResponse = responseMapper.toDto(savedWarehouse);
-        //log
         log.info("Converted warehouse response: {}", warehouseResponse);
-        //return
         return warehouseResponse;
     }
 
     @Override
     public WarehouseResponse updateWarehouse(WarehouseUpdateRequest warehouseUpdateRequest, Long id) {
-        //find by id
-        Warehouse existingWarehouse = warehouseRepository.findById(id).orElseThrow(() -> new RuntimeException("Warehouse with id "+id+" not found"));
-        //log found warehouse 
-        log.info("Found warehouse: {}", existingWarehouse); 
-        //update by mapper 
-        updateMapper.updateEntity(existingWarehouse, warehouseUpdateRequest); 
-        //log warehouse necessary info to update 
+        Warehouse existingWarehouse = warehouseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Warehouse with id " + id + " not found"));
+
+        log.info("Found warehouse: {}", existingWarehouse);
+        updateMapper.updateEntity(existingWarehouse, warehouseUpdateRequest);
         log.info("Updating info: {}",  existingWarehouse);
-        //save to db 
+
         Warehouse savedWarehouse = warehouseRepository.save(existingWarehouse);
-        //log 
         log.info("Warehouse updated: {}", savedWarehouse);
         return responseMapper.toDto(savedWarehouse);
     }
@@ -98,13 +87,11 @@ public class WarehouseServiceImpl implements WarehouseService {
     @Override
     public PageResponse<WarehouseResponse> findWarehousesByName(String name, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        //find all by name 
         Page<Warehouse> warehousePage =  warehouseRepository.findByNameContainingIgnoreCase(name, pageable);
-        //get content 
-        List<Warehouse> pageContent = warehousePage.getContent(); 
-        //convert to list response 
+
+        List<Warehouse> pageContent = warehousePage.getContent();
         List<WarehouseResponse> responseList = responseMapper.toDtoList(pageContent);
-        //return PageResponse 
+
         return PageResponse.<WarehouseResponse>builder()
                 .content(responseList)
                 .page(warehousePage.getNumber())
@@ -116,15 +103,23 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public void deleteWarehouse(Long id) {
-        //find warehouse by id
-        Warehouse warehouse = warehouseRepository.findById(id).orElseThrow(() -> new RuntimeException("Warehouse with id "+id+" not found"));
-        //log
+        Warehouse warehouse = warehouseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Warehouse with id " + id + " not found"));
+
         log.info("Warehouse to be deleted: {}", warehouse);
-        //set active to be false
         warehouse.setIsActive(false);
-        //save warehouse
         Warehouse deletedWarehouse = warehouseRepository.save(warehouse);
-        //log
         log.info("Warehouse deleted: {}", deletedWarehouse);
+    }
+
+    @Override
+    public WarehouseResponse restoreWarehouse(Long id) {
+        Warehouse warehouse = warehouseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Warehouse with id " + id + " not found"));
+
+        warehouse.setIsActive(true);
+        Warehouse restoredWarehouse = warehouseRepository.save(warehouse);
+        log.info("Warehouse restored: {}", restoredWarehouse);
+        return responseMapper.toDto(restoredWarehouse);
     }
 }
