@@ -21,9 +21,8 @@ public class CustomerController {
 
     // CREATE, UPDATE
     @PostMapping
-    public ResponseEntity<String> saveCustomer(@Valid @RequestBody CustomerRequest request) {
-        customerService.saveCustomer(request);
-        return ResponseEntity.ok("Lưu khách hàng thành công");
+    public ResponseEntity<CustomerResponse> saveCustomer(@Valid @RequestBody CustomerRequest request) {
+        return ResponseEntity.ok(customerService.saveCustomer(request));
     }
 
     // GET BY ID
@@ -113,13 +112,14 @@ public class CustomerController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCustomer(@PathVariable Long id) {
         customerService.delete(id);
-        return ResponseEntity.ok("Xóa khách hàng thành công");
+        return ResponseEntity.ok("XÃ³a khÃ¡ch hÃ ng thÃ nh cÃ´ng");
     }
 
     // RESTORE
     @PutMapping("/{id}/restore")
     public ResponseEntity<String> restoreCustomer(@PathVariable Long id) {
         customerService.restore(id);
-        return ResponseEntity.ok("Khôi phục khách hàng thành công");
+        return ResponseEntity.ok("KhÃ´i phá»¥c khÃ¡ch hÃ ng thÃ nh cÃ´ng");
     }
 }
+

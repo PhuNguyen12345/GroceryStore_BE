@@ -93,6 +93,7 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/error")
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/bank/webhook").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Public storefront data (homepage)
@@ -119,6 +120,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**", "/api/v1/brands/**", "/api/v1/categories/**")
                         .hasAnyRole("ADMIN", "STORE_MANAGER")
 
+                        // POS stock read-only helpers (ADMIN + STORE_MANAGER + INVENTORY_STAFF + CASHIER)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/warehouses", "/api/v1/warehouses/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "INVENTORY_STAFF", "CASHIER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/inventory/stocks/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "INVENTORY_STAFF", "CASHIER")
+
                         // Inventory (ADMIN + STORE_MANAGER + INVENTORY_STAFF)
                         .requestMatchers("/api/v1/suppliers/**", "/api/v1/warehouses/**", "/api/v1/inventory/**")
                         .hasAnyRole("ADMIN", "STORE_MANAGER", "INVENTORY_STAFF")
@@ -129,6 +136,10 @@ public class SecurityConfig {
 
                         // CRM read for checkout (ADMIN + STORE_MANAGER + CASHIER)
                         .requestMatchers(HttpMethod.GET, "/api/v1/customers/**", "/api/v1/vouchers/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "CASHIER")
+
+                        // POS create customer quickly at checkout (ADMIN + STORE_MANAGER + CASHIER)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/customers")
                         .hasAnyRole("ADMIN", "STORE_MANAGER", "CASHIER")
 
                         // Promotion read (ADMIN + STORE_MANAGER)

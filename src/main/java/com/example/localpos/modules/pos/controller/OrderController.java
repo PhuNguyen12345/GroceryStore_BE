@@ -3,15 +3,17 @@ package com.example.localpos.modules.pos.controller;
 import com.example.localpos.modules.pos.dto.request.CartItemRequest;
 import com.example.localpos.modules.pos.dto.request.CheckoutRequest;
 import com.example.localpos.modules.pos.dto.request.OrderRequest;
-import com.example.localpos.modules.pos.dto.response.OrderDetailResponse;
 import com.example.localpos.modules.pos.dto.response.OrderResponse;
+import com.example.localpos.modules.pos.dto.response.QrCheckoutResponse;
 import com.example.localpos.modules.pos.entity.Order;
 import com.example.localpos.modules.pos.mapper.OrderMapper;
-import com.example.localpos.modules.pos.service.OrderServiceImpl;
+import com.example.localpos.modules.pos.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/pos/orders")
@@ -19,17 +21,14 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class OrderController {
 
-    private final OrderServiceImpl orderService;
-
+    private final OrderService orderService;
     private final OrderMapper orderMapper;
-
 
     @PostMapping("/init")
     public ResponseEntity<Order> initOrder(@RequestBody OrderRequest request) {
         Order newOrder = orderService.createNewOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(newOrder);
     }
-
 
     @PutMapping("/{id}/items")
     public ResponseEntity<OrderResponse> updateCart(
@@ -39,7 +38,6 @@ public class OrderController {
         return ResponseEntity.ok(orderMapper.toDTO(updatedOrder));
     }
 
-
     @DeleteMapping("/{id}/items/{productUnitId}")
     public ResponseEntity<Order> removeItem(
             @PathVariable Long id,
@@ -47,7 +45,6 @@ public class OrderController {
         Order updatedOrder = orderService.removeItem(id, productUnitId);
         return ResponseEntity.ok(updatedOrder);
     }
-
 
     @PostMapping("/{id}/checkout")
     public ResponseEntity<Order> checkout(
@@ -57,9 +54,28 @@ public class OrderController {
         return ResponseEntity.ok(finalizedOrder);
     }
 
+    @PostMapping("/{id}/create-qr")
+    public ResponseEntity<QrCheckoutResponse> createQr(@PathVariable Long id) {
+        QrCheckoutResponse response = orderService.createQrForOrder(id);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Order> getOrder(@PathVariable Long id) {
-        // Bạn có thể thêm method findById vào Service nếu chưa có
         return ResponseEntity.ok(orderService.getOrderById(id));
+    }
+
+    @GetMapping("/{id}/sync-payment")
+    public ResponseEntity<Order> syncPayment(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.syncOnlinePaymentStatus(id));
+    }
+
+    @GetMapping("/pending")
+    public ResponseEntity<List<OrderResponse>> getPendingOrders() {
+        List<OrderResponse> pending = orderService.getPendingOrders()
+                .stream()
+                .map(orderMapper::toDTO)
+                .toList();
+        return ResponseEntity.ok(pending);
     }
 }
