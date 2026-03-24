@@ -12,5 +12,6 @@ import java.math.BigDecimal;
 @Setter
 public class CheckoutRequest {
     private PaymentMethod paymentMethod;
-    private BigDecimal amountPaid;
+    private Long voucherId;
+    private Integer usedPoints;
 }
