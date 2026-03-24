@@ -133,4 +133,15 @@ public class SupplierServiceImpl implements SupplierService {
         //log
         log.info("Supplier deleted with id: {}", updatedSupplier);
     }
+
+    @Override
+    public SupplierResponse restoreSupplier(Long id) {
+        Supplier supplier = supplierRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Supplier with id " + id + " not found"));
+
+        supplier.setIsActive(true);
+        Supplier updatedSupplier = supplierRepository.save(supplier);
+        log.info("Supplier restored with id: {}", updatedSupplier);
+        return supplierResponseMapper.toDto(updatedSupplier);
+    }
 }
