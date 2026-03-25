@@ -4,6 +4,7 @@ import com.example.localpos.enums.DiscountType;
 import com.example.localpos.enums.OrderStatus;
 import com.example.localpos.enums.PaymentMethod;
 import com.example.localpos.enums.PaymentStatus;
+import com.example.localpos.modules.crm.entity.Customer;
 import com.example.localpos.modules.crm.entity.Voucher;
 import com.example.localpos.modules.crm.repository.CustomerRepository;
 import com.example.localpos.modules.crm.repository.VoucherRepository;
@@ -206,7 +207,14 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal voucherDiscount = applyVoucher(order, request.getVoucherId());
 
         // 3. Apply loyalty points
-        BigDecimal pointsDiscount = applyLoyaltyPoints(order, request.getUsedPoints());
+        if (request.getCustomerId() != null) {
+            Customer customer = customerRepository
+                    .findById(request.getCustomerId())
+                    .orElseThrow();
+
+            order.setCustomer(customer);
+        }
+        BigDecimal pointsDiscount = applyPoints(order, request.getUsedPoints());
 
         // 4. Final amount
         BigDecimal finalAmount = total
@@ -235,7 +243,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 6. Finalize order
         finalizeOrder(order, method);
-        Voucher voucher = voucherRepository.findById(request.getVoucherId())
+        Voucher voucher = voucherRepository.findByCode(request.getVoucherId())
                 .orElseThrow(() -> new RuntimeException("Voucher khong ton tai"));
         increaseVoucherUsage(voucher);
 
@@ -438,11 +446,11 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private BigDecimal applyVoucher(Order order, Long voucherId) {
+    private BigDecimal applyVoucher(Order order, String voucherId) {
 
         if (voucherId == null) return BigDecimal.ZERO;
 
-        Voucher voucher = voucherRepository.findById(voucherId)
+        Voucher voucher = voucherRepository.findByCode(voucherId)
                 .orElseThrow(() -> new RuntimeException("Voucher khong ton tai"));
 
         // ===== 1. ACTIVE =====
@@ -498,7 +506,23 @@ public class OrderServiceImpl implements OrderService {
 
         return discount;
     }
+    private BigDecimal applyPoints(Order order, int usedPoints) {
 
+        if (usedPoints <= 0) return BigDecimal.ZERO;
+
+        Customer customer = order.getCustomer();
+
+        if (customer == null) {
+            throw new RuntimeException("Khong co khach hang de su dung points");
+        }
+
+        if (customer.getLoyaltyPoints() < usedPoints) {
+            throw new RuntimeException("Khong du diem");
+        }
+
+        // ví dụ: 1 điểm = 1000đ
+        return BigDecimal.valueOf(usedPoints * 1000);
+    }
     private void increaseVoucherUsage(Voucher voucher) {
         voucher.setQuantityUsed(
                 (voucher.getQuantityUsed() == null ? 0 : voucher.getQuantityUsed()) + 1
