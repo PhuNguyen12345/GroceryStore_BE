@@ -3,6 +3,7 @@ package com.example.localpos.modules.pos.service;
 import com.example.localpos.enums.OrderStatus;
 import com.example.localpos.enums.PaymentMethod;
 import com.example.localpos.enums.PaymentStatus;
+import com.example.localpos.modules.crm.entity.Customer;
 import com.example.localpos.modules.crm.repository.CustomerRepository;
 import com.example.localpos.modules.crm.repository.VoucherRepository;
 import com.example.localpos.modules.hr.repository.EmployeeRepository;
@@ -11,6 +12,7 @@ import com.example.localpos.modules.pos.dto.request.CartItemRequest;
 import com.example.localpos.modules.pos.dto.request.CheckoutRequest;
 import com.example.localpos.modules.pos.dto.request.OrderRequest;
 import com.example.localpos.modules.pos.dto.response.CheckoutResponse;
+import com.example.localpos.modules.pos.dto.response.QrResponse;
 import com.example.localpos.modules.pos.entity.Order;
 import com.example.localpos.modules.pos.entity.OrderDetail;
 import com.example.localpos.modules.inventory.repository.InventoryBatchRepository;
@@ -21,8 +23,11 @@ import com.example.localpos.modules.pos.repository.PaymentRepository;
 import com.example.localpos.modules.product.repository.ProductUnitRepository;
 import com.example.localpos.modules.product.entity.ProductUnit;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -139,36 +144,100 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
-        if(request.getVoucherId() != null){
 
-            var voucher = voucherRepository.findById(request.getVoucherId())
-                    .orElseThrow(() -> new RuntimeException("Voucher not found"));
-
-            order.setVoucher(voucher);
-
-            order.setDiscountAmount(voucher.getDiscountValue());
-
-            order.setFinalAmount(order.getTotalAmount().subtract(voucher.getDiscountValue()));
-
-            orderRepository.save(order);
-        }
         if (order.getStatus() == OrderStatus.COMPLETED) {
             throw new RuntimeException("Order already paid");
         }
 
-        if (request.getPaymentMethod() == PaymentMethod.CASH) {
+        BigDecimal total = calculateTotal(order);
 
-            return processCash(order);
+        // ===== 1. VOUCHER =====
+        BigDecimal voucherDiscount = applyVoucher(request.getVoucherId(), total);
 
+        BigDecimal afterVoucher = total.subtract(voucherDiscount).max(BigDecimal.ZERO);
+
+        // ===== 2. LOYALTY =====
+        int usedPoints = request.getUsedPoints() != null ? request.getUsedPoints() : 0;
+
+        int validPoints = 0;
+        BigDecimal pointDiscount = BigDecimal.ZERO;
+
+        if (order.getCustomer() != null) {
+
+            int maxPointsByMoney = afterVoucher.divide(BigDecimal.valueOf(1000)).intValue();
+
+            validPoints = Math.min(
+                    usedPoints,
+                    Math.min(order.getCustomer().getLoyaltyPoints(), maxPointsByMoney)
+            );
+
+            pointDiscount = BigDecimal.valueOf(validPoints).multiply(BigDecimal.valueOf(1000));
+
+            // TRỪ ĐIỂM
+            order.getCustomer().setLoyaltyPoints(
+                    order.getCustomer().getLoyaltyPoints() - validPoints
+            );
         }
 
-        if (request.getPaymentMethod() == PaymentMethod.QR_CODE) {
+        // ===== 3. FINAL =====
+        BigDecimal finalTotal = afterVoucher.subtract(pointDiscount);
 
-            return processBankQr(order);
+        // ===== 4. CỘNG ĐIỂM =====
+        int earnedPoints = finalTotal.divide(BigDecimal.valueOf(100000)).intValue();
 
+        if (order.getCustomer() != null) {
+            order.getCustomer().setLoyaltyPoints(
+                    order.getCustomer().getLoyaltyPoints() + earnedPoints
+            );
         }
 
-        throw new RuntimeException("Unsupported payment method");
+        // ===== 5. TRỪ KHO =====
+        for (OrderDetail detail : order.getOrderDetails()) {
+            deductInventory(detail.getProductUnit(), detail.getQuantity());
+        }
+
+        // ===== 6. PAYMENT =====
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setAmount(finalTotal);
+        payment.setPaymentMethod(PaymentMethod.QR_CODE);
+        payment.setStatus(PaymentStatus.PENDING);
+
+        paymentRepository.save(payment);
+
+        // ===== 7. UPDATE ORDER =====
+        order.setTotalAmount(total);
+        order.setDiscountAmount(voucherDiscount.add(pointDiscount));
+        order.setFinalAmount(finalTotal);
+        order.setStatus(OrderStatus.PENDING); // chờ thanh toán QR
+
+        orderRepository.save(order);
+
+        // ===== 8. QR =====
+        QrResponse qr = vietQrService.generateQr(finalTotal);
+
+        return CheckoutResponse.builder()
+                .total(total)
+                .finalTotal(finalTotal)
+                .usedPoints(validPoints)
+                .earnedPoints(earnedPoints)
+                .qr(qr)
+                .build();
+    }
+    @PostMapping("/{orderId}/confirm")
+    public ResponseEntity<?> confirmPayment(@PathVariable Long orderId) {
+
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        order.setStatus(OrderStatus.COMPLETED);
+
+        Payment payment = paymentRepository.findByOrder(order);
+        payment.setStatus(PaymentStatus.SUCCESS);
+
+        paymentRepository.save(payment);
+        orderRepository.save(order);
+
+        return ResponseEntity.ok("Payment success");
     }
 
     @Override
@@ -188,14 +257,31 @@ public class OrderServiceImpl implements OrderService {
         recalculateOrderFinancials(order);
         return orderRepository.save(order);
     }
+    private BigDecimal calculateTotal(Order order) {
+        return order.getOrderDetails().stream()
+                .map(OrderDetail::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+    private BigDecimal applyVoucher(Long voucherId, BigDecimal total) {
 
+        if (voucherId == null) return BigDecimal.ZERO;
 
+        var voucher = voucherRepository.findById(voucherId)
+                .orElseThrow(() -> new RuntimeException("Voucher not found"));
+
+        if (total.compareTo(voucher.getMinOrderValue()) < 0) {
+            return BigDecimal.ZERO;
+        }
+
+        return voucher.getDiscountValue();
+    }
 
     @Override
     public Order getOrderById(Long id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với ID: " + id));
     }
+
     private void deductInventory(ProductUnit unit, int quantityToDeduct) {
         // Lấy các lô hàng còn tồn kho của Unit này, sắp xếp theo ngày nhập/hạn sử dụng
         List<InventoryBatch> batches = inventoryBatchRepository
@@ -224,64 +310,64 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private CheckoutResponse processCash(Order order) {
-
-        Payment payment = new Payment();
-
-        payment.setOrder(order);
-        payment.setAmount(order.getTotalAmount());
-        payment.setPaymentMethod(PaymentMethod.CASH);
-        payment.setStatus(PaymentStatus.SUCCESS);
-
-        paymentRepository.save(payment);
-
-        order.setStatus(OrderStatus.COMPLETED);
-
-        orderRepository.save(order);
-
-        return CheckoutResponse.builder()
-                .status("SUCCESS")
-                .message("Cash payment completed")
-                .build();
-    }
-
-    private CheckoutResponse processBankQr(Order order) {
-
-        BigDecimal amount;
-
-        if(order.getVoucher() != null){
-
-            amount = order.getTotalAmount()
-                    .subtract(order.getVoucher().getDiscountValue());
-
-            order.setDiscountAmount(order.getVoucher().getDiscountValue());
-            order.setFinalAmount(amount);
-
-        } else {
-
-            amount = order.getTotalAmount();
-            order.setFinalAmount(amount);
-
-        }
-
-        Payment payment = new Payment();
-        payment.setOrder(order);
-        payment.setAmount(amount);
-        payment.setPaymentMethod(PaymentMethod.QR_CODE);
-        payment.setStatus(PaymentStatus.PENDING);
-
-        paymentRepository.save(payment);
-
-        orderRepository.save(order);
-
-        String qrUrl = vietQrService.generateQr(amount).getQrUrl();
-
-        return CheckoutResponse.builder()
-                .status("PENDING")
-                .qrUrl(qrUrl)
-                .message("Scan QR to pay")
-                .build();
-    }
+//    private CheckoutResponse processCash(Order order) {
+//
+//        Payment payment = new Payment();
+//
+//        payment.setOrder(order);
+//        payment.setAmount(order.getTotalAmount());
+//        payment.setPaymentMethod(PaymentMethod.CASH);
+//        payment.setStatus(PaymentStatus.SUCCESS);
+//
+//        paymentRepository.save(payment);
+//
+//        order.setStatus(OrderStatus.COMPLETED);
+//
+//        orderRepository.save(order);
+//
+//        return CheckoutResponse.builder()
+//                .status("SUCCESS")
+//                .message("Cash payment completed")
+//                .build();
+//    }
+//
+//    private CheckoutResponse processBankQr(Order order) {
+//
+//        BigDecimal amount;
+//
+//        if(order.getVoucher() != null){
+//
+//            amount = order.getTotalAmount()
+//                    .subtract(order.getVoucher().getDiscountValue());
+//
+//            order.setDiscountAmount(order.getVoucher().getDiscountValue());
+//            order.setFinalAmount(amount);
+//
+//        } else {
+//
+//            amount = order.getTotalAmount();
+//            order.setFinalAmount(amount);
+//
+//        }
+//
+//        Payment payment = new Payment();
+//        payment.setOrder(order);
+//        payment.setAmount(amount);
+//        payment.setPaymentMethod(PaymentMethod.QR_CODE);
+//        payment.setStatus(PaymentStatus.PENDING);
+//
+//        paymentRepository.save(payment);
+//
+//        orderRepository.save(order);
+//
+//        String qrUrl = vietQrService.generateQr(amount).getQrUrl();
+//
+//        return CheckoutResponse.builder()
+//                .status("PENDING")
+//                .qrUrl(qrUrl)
+//                .message("Scan QR to pay")
+//                .build();
+//    }
 
     private void recalculateOrderFinancials(Order order) {
         // Cộng tổng các subtotal từ các dòng chi tiết

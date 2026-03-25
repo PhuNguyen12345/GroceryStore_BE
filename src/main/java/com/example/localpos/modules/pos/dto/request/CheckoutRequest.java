@@ -13,4 +13,5 @@ import java.math.BigDecimal;
 public class CheckoutRequest {
     private PaymentMethod paymentMethod;
     private Long voucherId;
+    private Integer usedPoints;
 }
