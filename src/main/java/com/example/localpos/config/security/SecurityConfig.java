@@ -101,6 +101,38 @@ public class SecurityConfig {
                                 "/api/v1/auth/login",
                                 "/api/auth/login"
                         ).permitAll()
+                        // HR: only admin/store manager can manage employees
+                        .requestMatchers("/api/v1/employees/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+
+                        // HR: shift & schedule management is admin/store manager only
+                        // IMPORTANT: More specific patterns MUST come before general patterns
+                        // Cashier and inventory staff can view their own schedule/shift data
+                        .requestMatchers(HttpMethod.GET, "/api/v1/work-schedules/me", "/api/v1/work-schedules/me/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "CASHIER", "INVENTORY_STAFF")
+
+                        // HR modification (create/update/delete) is admin/store manager only
+                        .requestMatchers(HttpMethod.POST, "/api/v1/shifts/**", "/api/v1/work-schedules/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/shifts/**", "/api/v1/work-schedules/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/shifts/**", "/api/v1/work-schedules/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/shifts/**", "/api/v1/work-schedules/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+
+                        // HR reading (GET) is allowed for all authenticated users so cashiers can view shift schedules
+                        .requestMatchers(HttpMethod.GET, "/api/v1/shifts/**", "/api/v1/work-schedules/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "CASHIER", "INVENTORY_STAFF")
+
+                        // Cashier can access customer functions
+                        .requestMatchers("/api/v1/customers/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "CASHIER")
+
+                        // Inventory staff can view stock by product/store
+                        .requestMatchers(HttpMethod.GET, "/api/v1/inventory/stocks/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "INVENTORY_STAFF")
+
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         //  requires authentication
                         .anyRequest().authenticated()
@@ -122,7 +154,7 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*"));
 
         // Cho phép các method nào?
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         // Cho phép các header nào?
         configuration.setAllowedHeaders(List.of("*"));

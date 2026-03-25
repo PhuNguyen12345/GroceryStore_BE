@@ -1,5 +1,6 @@
 package com.example.localpos.modules.hr.controller;
 
+import com.example.localpos.common.constants.ApiPaths;
 import com.example.localpos.modules.hr.dto.request.ShiftRequestDTO;
 import com.example.localpos.modules.hr.dto.response.ShiftResponseDTO;
 import com.example.localpos.modules.hr.dto.request.ShiftUpdateDTO;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalTime;
@@ -16,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/shifts")
+@RequestMapping(ApiPaths.HRCtrl.SHIFT)
 @RequiredArgsConstructor
 public class ShiftController {
 

@@ -1,5 +1,6 @@
 package com.example.localpos.modules.hr.controller;
 
+import com.example.localpos.common.constants.ApiPaths;
 import com.example.localpos.enums.EmployeeRole;
 import com.example.localpos.modules.hr.dto.request.EmployeeRequestDTO;
 import com.example.localpos.modules.hr.dto.response.EmployeeResponseDTO;
@@ -12,14 +13,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/employees")
+@RequestMapping(ApiPaths.HRCtrl.EMPLOYEE)
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('STORE_MANAGER', 'ADMIN')")
 public class EmployeeController {
 
     private final EmployeeService employeeService;

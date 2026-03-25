@@ -1,17 +1,23 @@
 package com.example.localpos.modules.hr.controller;
 
+import com.example.localpos.common.constants.ApiPaths;
 import com.example.localpos.modules.hr.dto.request.WorkScheduleRequestDTO;
 import com.example.localpos.modules.hr.dto.response.WorkScheduleResponseDTO;
 import com.example.localpos.modules.hr.dto.request.WorkScheduleUpdateDTO;
+import com.example.localpos.modules.hr.dto.response.EmployeeResponseDTO;
+import com.example.localpos.modules.hr.service.EmployeeService;
 import com.example.localpos.modules.hr.service.WorkScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -20,17 +26,15 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/work-schedules")
+@RequestMapping(ApiPaths.HRCtrl.SCHEDULE)
 @RequiredArgsConstructor
 public class WorkScheduleController {
 
     private final WorkScheduleService workScheduleService;
+    private final EmployeeService employeeService;
 
     // CRUD
 
-    /**
-     * POST /api/v1/work-schedules
-     */
     @PostMapping
     public ResponseEntity<WorkScheduleResponseDTO> create(
             @Valid @RequestBody WorkScheduleRequestDTO request) {
@@ -38,10 +42,34 @@ public class WorkScheduleController {
                 .body(workScheduleService.create(request));
     }
 
-    /**
-     * PATCH /api/v1/work-schedules/{id}
-     * Partially update — only supplied fields are modified.
-     */
+        /**
+         * POST /api/v1/work-schedules/validate
+         * Validates whether a schedule can be created with the same employee/shift/date key.
+         */
+        @PostMapping("/validate")
+        public ResponseEntity<Map<String, Object>> validateCreate(
+            @Valid @RequestBody WorkScheduleRequestDTO request) {
+        boolean exists = workScheduleService
+            .search(
+                request.getEmployeeId(),
+                request.getShiftId(),
+                request.getWorkDate(),
+                request.getWorkDate(),
+                null,
+                PageRequest.of(0, 1)
+            )
+            .hasContent();
+
+        if (exists) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "valid", false,
+                "message", "A schedule already exists for this employee, shift and date."
+            ));
+        }
+
+        return ResponseEntity.ok(Map.of("valid", true));
+        }
+
     @PatchMapping("/{id}")
     public ResponseEntity<WorkScheduleResponseDTO> update(
             @PathVariable Long id,
@@ -49,9 +77,6 @@ public class WorkScheduleController {
         return ResponseEntity.ok(workScheduleService.update(id, request));
     }
 
-    /**
-     * DELETE /api/v1/work-schedules/{id}
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         workScheduleService.delete(id);
@@ -60,17 +85,11 @@ public class WorkScheduleController {
 
     // Single-record lookups
 
-    /**
-     * GET /api/v1/work-schedules/{id}
-     */
     @GetMapping("/{id}")
     public ResponseEntity<WorkScheduleResponseDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(workScheduleService.findById(id));
     }
 
-    /**
-     * GET /api/v1/work-schedules/employee/{employeeId}/date/{date}
-     */
     @GetMapping("/employee/{employeeId}/date/{date}")
     public ResponseEntity<WorkScheduleResponseDTO> findByEmployeeAndDate(
             @PathVariable Long employeeId,
@@ -80,18 +99,33 @@ public class WorkScheduleController {
 
     // List / search
 
-    /**
-     * GET /api/v1/work-schedules
-     */
     @GetMapping
     public ResponseEntity<List<WorkScheduleResponseDTO>> findAll() {
         return ResponseEntity.ok(workScheduleService.findAll());
     }
 
-    /**
-     * GET /api/v1/work-schedules/search
-     *   ?employeeId=&shiftId=&from=&to=&isPresent=&page=&size=&sort=
-     */
+    @GetMapping("/me")
+    public ResponseEntity<List<WorkScheduleResponseDTO>> findMySchedules(Authentication authentication) {
+        return ResponseEntity.ok(workScheduleService.findByEmployee(resolveCurrentEmployeeId(authentication)));
+    }
+
+    @GetMapping("/me/date/{date}")
+    public ResponseEntity<WorkScheduleResponseDTO> findMyScheduleByDate(
+            Authentication authentication,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(
+                workScheduleService.findByEmployeeAndDate(resolveCurrentEmployeeId(authentication), date));
+    }
+
+    @GetMapping("/me/range")
+    public ResponseEntity<List<WorkScheduleResponseDTO>> findMySchedulesByDateRange(
+            Authentication authentication,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(
+                workScheduleService.findByEmployeeAndDateRange(resolveCurrentEmployeeId(authentication), from, to));
+    }
+
     @GetMapping("/search")
     public ResponseEntity<Page<WorkScheduleResponseDTO>> search(
             @RequestParam(required = false) Long employeeId,
@@ -281,5 +315,10 @@ public class WorkScheduleController {
                 "attendedDays",  attended,
                 "absentDays",    scheduled - attended
         ));
+    }
+
+    private Long resolveCurrentEmployeeId(Authentication authentication) {
+        EmployeeResponseDTO current = employeeService.findByUsername(authentication.getName());
+        return current.getId();
     }
 }
