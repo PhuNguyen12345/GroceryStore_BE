@@ -1,6 +1,7 @@
 package com.example.localpos.modules.product.controller;
 
 import com.example.localpos.common.constants.ApiPaths;
+import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.modules.product.dto.request.ProductUnitCreateRequest;
 import com.example.localpos.modules.product.dto.request.ProductUnitUpdateRequest;
 import com.example.localpos.modules.product.dto.response.ProductUnitResponse;
@@ -31,8 +32,19 @@ public class ProductUnitController {
     }
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<ProductUnitResponse>> getUnits(@PathVariable Long productId) {
-        return ResponseEntity.ok(productUnitService.getUnitsByProduct(productId));
+    public ResponseEntity<PageResponse<ProductUnitResponse>> getUnits(
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size
+    ) {
+        return ResponseEntity.ok(productUnitService.getUnitsByProduct(productId, page, size));
+    }
+
+    @GetMapping("/search/product")
+    public ResponseEntity<List<ProductUnitResponse>> searchByProductName(
+            @RequestParam String productName
+    ) {
+        return ResponseEntity.ok(productUnitService.searchUnitsByProductName(productName));
     }
 
     @DeleteMapping("/{id}")

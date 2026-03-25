@@ -1,5 +1,6 @@
 package com.example.localpos.modules.product.service.impl;
 
+import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.modules.product.dto.request.ProductUnitCreateRequest;
 import com.example.localpos.modules.product.dto.request.ProductUnitUpdateRequest;
 import com.example.localpos.modules.product.dto.response.ProductUnitResponse;
@@ -11,6 +12,9 @@ import com.example.localpos.modules.product.repository.ProductUnitRepository;
 import com.example.localpos.modules.product.service.ProductUnitService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -76,9 +80,31 @@ public class ProductUnitServiceImpl implements ProductUnitService {
     }
 
     @Override
-    public List<ProductUnitResponse> getUnitsByProduct(Long productId) {
-        List<ProductUnit> units = productUnitRepository.findByProduct_Id(productId);
+    public PageResponse<ProductUnitResponse> getUnitsByProduct(Long productId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProductUnit> unitPage = productUnitRepository.findByProduct_Id(productId, pageable);
 
+        List<ProductUnitResponse> content = unitPage.getContent().stream()
+                .map(productUnitMapper::toDto)
+                .toList();
+
+        return PageResponse.<ProductUnitResponse>builder()
+                .content(content)
+                .page(unitPage.getNumber())
+                .size(unitPage.getSize())
+                .totalElements(unitPage.getTotalElements())
+                .totalPages(unitPage.getTotalPages())
+                .build();
+    }
+
+    @Override
+    public List<ProductUnitResponse> searchUnitsByProductName(String productName) {
+        String keyword = productName == null ? "" : productName.trim();
+        if (keyword.isEmpty()) {
+            return List.of();
+        }
+
+        List<ProductUnit> units = productUnitRepository.findByProduct_NameContainingIgnoreCase(keyword);
         return units.stream()
                 .map(productUnitMapper::toDto)
                 .toList();
