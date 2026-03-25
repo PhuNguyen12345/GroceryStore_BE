@@ -46,8 +46,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
               AND (:isActive IS NULL OR e.isActive = :isActive)
             """)
     Page<Employee> searchEmployees(
-            @Param("keyword")  String keyword,
-            @Param("role")     EmployeeRole role,
+            @Param("keyword") String keyword,
+            @Param("role") EmployeeRole role,
             @Param("isActive") Boolean isActive,
             Pageable pageable
     );

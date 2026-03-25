@@ -74,32 +74,92 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Tắt CSRF: Vì chúng ta dùng REST API stateless, không dùng Session
-                // Nếu không tắt, các method POST/PUT/DELETE sẽ bị chặn 403
+                // 1. Tắt CSRF: vì dùng REST API stateless, không dùng Session
+                // Nếu không tắt, các method POST/PUT/DELETE có thể bị chặn 403
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // 2. Cho phép CORS: Để Frontend (Port 3000) gọi được Backend (Port 8080)
+                // 2. Cho phép CORS: để Frontend (port 3000) gọi được Backend (port 8080)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // 3. Cấu hình quyền truy cập (Quan trọng nhất)
+                // 3. Cấu hình quyền truy cập (quan trọng nhất)
                 .authorizeHttpRequests(auth -> auth
-                        // public - no token required
+                        // Public endpoints
                         .requestMatchers(
                                 new AntPathRequestMatcher("/api/v1/auth/login"),
-                                new AntPathRequestMatcher("/api/v1/products"),
-                                new AntPathRequestMatcher("/api/v1/products/**"),
+                                new AntPathRequestMatcher("/uploads/images/**"),
                                 new AntPathRequestMatcher("/v3/api-docs/**"),
                                 new AntPathRequestMatcher("/swagger-ui/**"),
                                 new AntPathRequestMatcher("/swagger-ui.html"),
                                 new AntPathRequestMatcher("/error")
                         ).permitAll()
-                        .requestMatchers(HttpMethod.POST,
-                                "/api/v1/auth/login",
-                                "/api/auth/login"
-                        ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/bank/webhook").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        //  requires authentication
-                        .anyRequest().permitAll()
+
+                        // Public storefront data (homepage)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products", "/api/v1/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products/units/product/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/tree/active").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/promotions/filter/active").permitAll()
+
+                        // Employee self/profile read (all staff roles)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/employees/*", "/api/v1/employees/username/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "INVENTORY_STAFF", "CASHIER")
+
+                        // HR management (ADMIN only)
+                        .requestMatchers("/api/v1/shifts/**", "/api/v1/work-schedules/**")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers("/api/v1/employees/**")
+                        .hasAnyRole("ADMIN", "INVENTORY_STAFF")
+
+                        // Product management write (ADMIN + STORE_MANAGER)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/**", "/api/v1/brands/**", "/api/v1/categories/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/products/**", "/api/v1/brands/**", "/api/v1/categories/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/products/**", "/api/v1/brands/**", "/api/v1/categories/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**", "/api/v1/brands/**", "/api/v1/categories/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+
+                        // POS stock read-only helpers (ADMIN + STORE_MANAGER + INVENTORY_STAFF + CASHIER)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/warehouses", "/api/v1/warehouses/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "INVENTORY_STAFF", "CASHIER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/inventory/stocks/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "INVENTORY_STAFF", "CASHIER")
+
+                        // Inventory (ADMIN + STORE_MANAGER + INVENTORY_STAFF)
+                        .requestMatchers("/api/v1/suppliers/**", "/api/v1/warehouses/**", "/api/v1/inventory/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "INVENTORY_STAFF")
+
+                        // POS (ADMIN + STORE_MANAGER + CASHIER)
+                        .requestMatchers("/api/v1/pos/orders/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "CASHIER")
+
+                        // CRM read for checkout (ADMIN + STORE_MANAGER + CASHIER)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/customers/**", "/api/v1/vouchers/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "CASHIER")
+
+                        // POS create customer quickly at checkout (ADMIN + STORE_MANAGER + CASHIER)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/customers")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER", "CASHIER")
+
+                        // Promotion read (ADMIN + STORE_MANAGER)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/promotions/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+
+                        // CRM write (ADMIN + STORE_MANAGER)
+                        .requestMatchers("/api/v1/customers/**", "/api/v1/vouchers/**", "/api/v1/promotions/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+
+                        // Reports + settings
+                        .requestMatchers("/api/v1/reports/**")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+                        .requestMatchers("/api/v1/settings/**")
+                        .hasRole("ADMIN")
+
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -134,3 +194,4 @@ public class SecurityConfig {
         return source;
     }
 }
+

@@ -1,0 +1,2 @@
+ALTER TABLE suppliers
+    ADD COLUMN logo_url VARCHAR(255) DEFAULT NULL;

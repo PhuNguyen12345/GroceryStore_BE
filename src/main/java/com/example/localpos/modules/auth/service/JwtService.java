@@ -44,10 +44,7 @@ public class JwtService {
                 .compact();
     }
 
-    // -------------------------------------------------------
     // Validate
-    // -------------------------------------------------------
-
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
             String username = extractUsername(token);
@@ -61,10 +58,7 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    // -------------------------------------------------------
     // Extract
-    // -------------------------------------------------------
-
     public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();
     }
@@ -81,12 +75,8 @@ public class JwtService {
                 .getBody();
     }
 
-    // -------------------------------------------------------
     // Key
-    // -------------------------------------------------------
-
     private SecretKey getSigningKey() {
-        // Plain UTF-8 string key — no Base64 decoding needed
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 }

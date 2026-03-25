@@ -14,4 +14,5 @@ public class CheckoutRequest {
     private PaymentMethod paymentMethod;
     private Long voucherId;
     private Integer usedPoints;
+    private BigDecimal amountPaid;
 }
