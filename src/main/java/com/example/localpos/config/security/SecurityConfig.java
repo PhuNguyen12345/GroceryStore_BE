@@ -107,8 +107,11 @@ public class SecurityConfig {
                         .hasAnyRole("ADMIN", "STORE_MANAGER", "INVENTORY_STAFF", "CASHIER")
 
                         // HR management (ADMIN only)
-                        .requestMatchers("/api/v1/employees/**", "/api/v1/shifts/**", "/api/v1/work-schedules/**")
+                        .requestMatchers("/api/v1/shifts/**", "/api/v1/work-schedules/**")
                         .hasRole("ADMIN")
+
+                        .requestMatchers("/api/v1/employees/**")
+                        .hasAnyRole("ADMIN", "INVENTORY_STAFF")
 
                         // Product management write (ADMIN + STORE_MANAGER)
                         .requestMatchers(HttpMethod.POST, "/api/v1/products/**", "/api/v1/brands/**", "/api/v1/categories/**")
