@@ -1,6 +1,7 @@
 package com.example.localpos.modules.pos.dto.response;
 
 import com.example.localpos.enums.OrderStatus;
+import com.example.localpos.modules.crm.dto.response.CustomerResponse;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,5 +18,6 @@ public class OrderResponse {
     private String employeeName;
     private BigDecimal totalAmount;
     private OrderStatus status;
+    private CustomerResponse customer;
     private List<OrderDetailResponse> orderDetails;
 }

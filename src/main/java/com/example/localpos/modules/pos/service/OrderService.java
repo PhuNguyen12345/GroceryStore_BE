@@ -12,6 +12,10 @@ import java.util.List;
 public interface OrderService {
     Order createNewOrder(OrderRequest request);
 
+    Order updateCustomer(Long orderId, Long customerId);
+
+    void cancelOrder(Long orderId);
+
     Order updateCart(Long orderId, CartItemRequest request);
 
     Order removeItem(Long orderId, Long productUnitId);

@@ -17,4 +17,5 @@ public class QrCheckoutResponse {
     private String qrCode;
     private String checkoutUrl;
     private String provider;
+    private Long payOsOrderCode;
 }

@@ -43,7 +43,7 @@ public class TransactionSpecification {
             //find by employee
             if (StringUtils.hasText(employeeName)) {
                 Join<Object, Object> employeeJoin = root.join("employee", JoinType.INNER);
-                Predicate p = cb.like(cb.lower(employeeJoin.get("name")), "%" + employeeName.toLowerCase() + "%");
+                Predicate p = cb.like(cb.lower(employeeJoin.get("username")), "%" + employeeName.toLowerCase() + "%");
                 predicates.add(p);
             }
             //find by createdAt

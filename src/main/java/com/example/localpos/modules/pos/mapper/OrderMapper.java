@@ -4,6 +4,7 @@ import com.example.localpos.modules.pos.dto.response.OrderDetailResponse;
 import com.example.localpos.modules.pos.dto.response.OrderResponse;
 import com.example.localpos.modules.pos.entity.Order;
 import com.example.localpos.modules.pos.entity.OrderDetail;
+import com.example.localpos.modules.crm.dto.response.CustomerResponse;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -22,6 +23,16 @@ public class OrderMapper {
 
         if (order.getEmployee() != null) {
             dto.setEmployeeName(order.getEmployee().getFullName());
+        }
+
+        if (order.getCustomer() != null) {
+            CustomerResponse customerDTO = new CustomerResponse();
+            customerDTO.setId(order.getCustomer().getId());
+            customerDTO.setFullName(order.getCustomer().getFullName());
+            customerDTO.setPhone(order.getCustomer().getPhone());
+            customerDTO.setLoyaltyPoints(order.getCustomer().getLoyaltyPoints());
+            customerDTO.setCustomerTier(order.getCustomer().getCustomerTier());
+            dto.setCustomer(customerDTO);
         }
 
         if (order.getOrderDetails() != null) {

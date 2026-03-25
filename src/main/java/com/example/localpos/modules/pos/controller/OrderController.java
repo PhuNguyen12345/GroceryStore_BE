@@ -54,6 +54,20 @@ public class OrderController {
         return ResponseEntity.ok(finalizedOrder);
     }
 
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancelOrder(@PathVariable Long id) {
+        orderService.cancelOrder(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/customer")
+    public ResponseEntity<OrderResponse> updateCustomer(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long customerId) {
+        Order updatedOrder = orderService.updateCustomer(id, customerId);
+        return ResponseEntity.ok(orderMapper.toDTO(updatedOrder));
+    }
+
     @PostMapping("/{id}/create-qr")
     public ResponseEntity<QrCheckoutResponse> createQr(@PathVariable Long id) {
         QrCheckoutResponse response = orderService.createQrForOrder(id);

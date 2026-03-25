@@ -122,6 +122,39 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
+    public void cancelOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Khong tim thay don hang ID: " + orderId));
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Chi co the huy don hang dang cho");
+        }
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+    }
+
+    @Override
+    @Transactional
+    public Order updateCustomer(Long orderId, Long customerId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Khong tim thay don hang ID: " + orderId));
+        
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Chi co the cap nhat don hang dang cho");
+        }
+
+        if (customerId == null) {
+            order.setCustomer(null);
+        } else {
+            Customer c = customerRepository.findById(customerId)
+                    .orElseThrow(() -> new RuntimeException("Khong tim thay khach hang ID: " + customerId));
+            order.setCustomer(c);
+        }
+
+        return orderRepository.save(order);
+    }
+
+    @Override
+    @Transactional
     public Order updateCart(Long orderId, CartItemRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Khong tim thay don hang ID: " + orderId));
@@ -243,9 +276,11 @@ public class OrderServiceImpl implements OrderService {
 
         // 6. Finalize order
         finalizeOrder(order, method);
-        Voucher voucher = voucherRepository.findByCode(request.getVoucherId())
-                .orElseThrow(() -> new RuntimeException("Voucher khong ton tai"));
-        increaseVoucherUsage(voucher);
+        if (request.getVoucherId() != null && !request.getVoucherId().trim().isEmpty()) {
+            Voucher voucher = voucherRepository.findByCode(request.getVoucherId())
+                    .orElseThrow(() -> new RuntimeException("Voucher khong ton tai"));
+            increaseVoucherUsage(voucher);
+        }
 
         // 7. Save payment
         upsertPayment(order, method, amountPaid,
@@ -362,11 +397,29 @@ public class OrderServiceImpl implements OrderService {
         }
 
         try {
+            // Find the active PayOS order code from the latest pending payment
+            Payment pending = paymentRepository
+                    .findTopByOrder_IdAndPaymentMethodAndStatusOrderByCreatedAtDesc(
+                            order.getId(),
+                            PaymentMethod.QR_CODE,
+                            PaymentStatus.PENDING
+                    ).orElse(null);
+
+            long payOsOrderCode = orderId;
+            if (pending != null && pending.getPaymentPayload() != null) {
+                try {
+                    JsonNode node = objectMapper.readTree(pending.getPaymentPayload());
+                    if (node.has("payOsOrderCode")) {
+                        payOsOrderCode = node.path("payOsOrderCode").asLong(orderId);
+                    }
+                } catch (Exception ignored) {}
+            }
+
             HttpHeaders headers = new HttpHeaders();
             headers.set("x-client-id", payOsClientId.trim());
             headers.set("x-api-key", payOsApiKey.trim());
 
-            String url = safeText(payOsApiUrl).replaceAll("/+$", "") + "/v2/payment-requests/" + orderId;
+            String url = safeText(payOsApiUrl).replaceAll("/+$", "") + "/v2/payment-requests/" + payOsOrderCode;
             ResponseEntity<JsonNode> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
@@ -448,7 +501,7 @@ public class OrderServiceImpl implements OrderService {
 
     private BigDecimal applyVoucher(Order order, String voucherId) {
 
-        if (voucherId == null) return BigDecimal.ZERO;
+        if (voucherId == null || voucherId.trim().isEmpty()) return BigDecimal.ZERO;
 
         Voucher voucher = voucherRepository.findByCode(voucherId)
                 .orElseThrow(() -> new RuntimeException("Voucher khong ton tai"));
@@ -624,7 +677,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private QrCheckoutResponse createPayOsPayment(Order order, BigDecimal amount) {
-        long payOsOrderCode = order.getId();
+        long payOsOrderCode = Long.parseLong((System.currentTimeMillis() / 1000) + String.format("%04d", order.getId() % 10000));
         int amountInt = amount.setScale(0, java.math.RoundingMode.HALF_UP).intValueExact();
         String description = "TT " + order.getOrderCode();
         String returnUrl = appendQueryParam(
@@ -669,7 +722,9 @@ public class OrderServiceImpl implements OrderService {
 
         JsonNode body = response.getBody();
         if (body == null || !"00".equals(body.path("code").asText())) {
-            throw new RuntimeException("Tao link PayOS that bai");
+            String payosDesc = body != null ? body.path("desc").asText() : "No response body";
+            System.err.println("PayOS Error: " + body);
+            throw new RuntimeException("Tao link PayOS that bai: " + payosDesc);
         }
 
         JsonNode data = body.path("data");
@@ -688,6 +743,7 @@ public class OrderServiceImpl implements OrderService {
                 .qrCode(qrCode)
                 .checkoutUrl(checkoutUrl)
                 .provider("PAYOS")
+                .payOsOrderCode(payOsOrderCode)
                 .build();
     }
 
@@ -754,6 +810,7 @@ public class OrderServiceImpl implements OrderService {
                     .qrCode(qrCode)
                     .checkoutUrl(checkoutUrl)
                     .provider("PAYOS")
+                    .payOsOrderCode(node.path("payOsOrderCode").asLong(order.getId()))
                     .build();
         } catch (JsonProcessingException ignored) {
             return null;
