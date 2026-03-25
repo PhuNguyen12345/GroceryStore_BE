@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.localpos.common.constants.ApiPaths;
+
 @RestController
 @RequestMapping(ApiPaths.InventoryCtrl.SUPPLIER)
 public class SupplierController {
@@ -25,9 +26,9 @@ public class SupplierController {
             @RequestParam(defaultValue = "10") int size
     ) {
         if (name != null) {
-            return ResponseEntity.ok(supplierService.findSuppliersByName(name,page,size));
+            return ResponseEntity.ok(supplierService.findSuppliersByName(name, page, size));
         }
-        return ResponseEntity.ok(supplierService.getAllSuppliers(page,size));
+        return ResponseEntity.ok(supplierService.getAllSuppliers(page, size));
     }
 
     @PostMapping
@@ -36,14 +37,21 @@ public class SupplierController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SupplierResponse> updateSupplier(@PathVariable Long id, @RequestBody SupplierUpdateRequest supplierRequest) {
+    public ResponseEntity<SupplierResponse> updateSupplier(
+            @PathVariable Long id,
+            @RequestBody SupplierUpdateRequest supplierRequest
+    ) {
         return ResponseEntity.ok(supplierService.updateSupplier(id, supplierRequest));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteSupplier(@PathVariable Long id) {
         supplierService.deleteSupplier(id);
-        return ResponseEntity.ok("Đã xoá thành công nhà phân phối có id: "+id);
+        return ResponseEntity.ok("Da ngung nha cung cap co id: " + id);
     }
 
+    @PutMapping("/{id}/restore")
+    public ResponseEntity<SupplierResponse> restoreSupplier(@PathVariable Long id) {
+        return ResponseEntity.ok(supplierService.restoreSupplier(id));
+    }
 }

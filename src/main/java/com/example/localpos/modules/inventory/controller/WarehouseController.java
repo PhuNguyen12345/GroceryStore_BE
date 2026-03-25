@@ -30,13 +30,13 @@ public class WarehouseController {
             return ResponseEntity.ok(warehouseService.findWarehousesByName(name,page,size));
         }
         return ResponseEntity.ok(warehouseService.getAllWarehouses(page,size));
-    };
+    }
 
     @PostMapping
     public ResponseEntity<WarehouseResponse> addWarehouse(
         @Valid @RequestBody WarehouseCreateRequest createRequest) {
         return ResponseEntity.ok(warehouseService.addWarehouse(createRequest));
-    };
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<WarehouseResponse> updateWarehouse(
@@ -45,11 +45,13 @@ public class WarehouseController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteWarehouse(
-            @PathVariable Long id
-    ) {
+    public ResponseEntity<String> deleteWarehouse(@PathVariable Long id) {
         warehouseService.deleteWarehouse(id);
-        System.out.println("Warehouse deleted with id: " + id);
-        return ResponseEntity.ok("Đã xoá nhà kho với id: "+id);
+        return ResponseEntity.ok("Da ngung kho voi id: " + id);
+    }
+
+    @PutMapping("/{id}/restore")
+    public ResponseEntity<WarehouseResponse> restoreWarehouse(@PathVariable Long id) {
+        return ResponseEntity.ok(warehouseService.restoreWarehouse(id));
     }
 }

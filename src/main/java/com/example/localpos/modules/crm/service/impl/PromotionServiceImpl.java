@@ -25,86 +25,48 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Override
     public PromotionResponse savePromotion(PromotionRequest request) {
-        // Validate request body.
-        if (request == null) {
-            throw new RuntimeException("Dữ liệu khuyến mãi không được để trống");
-        }
-
-        // Ensure promotion date range is valid.
-        if (request.getStartDate() != null && request.getEndDate() != null) {
-            if (!request.getStartDate().isBefore(request.getEndDate())) {
-                throw new IllegalArgumentException("Ngày bắt đầu phải nhỏ hơn ngày kết thúc");
-            }
+        if (request.getStartDate() != null
+                && request.getEndDate() != null
+                && !request.getStartDate().isBefore(request.getEndDate())) {
+            throw new IllegalArgumentException("Ngày bắt đầu phải nhỏ hơn ngày kết thúc");
         }
 
         Promotion promotion;
+        boolean isUpdate = request.getId() != null;
 
-        if (request.getId() != null) {
-            // Update existing promotion.
+        if (isUpdate) {
             promotion = promotionRepository.findById(request.getId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi"));
-
-            if (request.getName() != null && !request.getName().trim().isBlank()) {
-                String newName = request.getName().trim();
-
-                // Reject name if it belongs to another promotion.
-                if (!newName.equalsIgnoreCase(promotion.getName())
-                        && promotionRepository.existsByNameIgnoreCaseAndIdNot(newName, promotion.getId())) {
-                    throw new RuntimeException("Tên khuyến mãi đã tồn tại");
-                }
-
-                promotion.setName(newName);
-            }
-
         } else {
-            // Create new promotion with unique name.
-            if (request.getName() == null || request.getName().trim().isBlank()) {
-                throw new RuntimeException("Tên khuyến mãi không được để trống");
-            }
+            promotion = new Promotion();
+        }
 
-            String newName = request.getName().trim();
+        String name = request.getName().trim();
 
-            if (promotionRepository.existsByNameIgnoreCase(newName)) {
+        if (isUpdate) {
+            if (promotionRepository.existsByNameIgnoreCaseAndIdNot(name, promotion.getId())) {
                 throw new RuntimeException("Tên khuyến mãi đã tồn tại");
             }
-
-            promotion = new Promotion();
-            // Copy request fields except values handled manually below.
-            BeanUtils.copyProperties(request, promotion, "id", "name", "bannerUrl");
-            promotion.setName(newName);
-            promotion.setBannerUrl(request.getBannerUrl());
-
-            // Default promotion status to active when missing.
-            if (promotion.getIsActive() == null) {
-                promotion.setIsActive(true);
+        } else {
+            if (promotionRepository.existsByNameIgnoreCase(name)) {
+                throw new RuntimeException("Tên khuyến mãi đã tồn tại");
             }
-
-            Promotion savedPromotion = promotionRepository.save(promotion);
-            return responseMapper.toDto(savedPromotion);
         }
 
-        if (request.getDescription() != null) {
-            promotion.setDescription(request.getDescription());
-        }
-
-        if (request.getBannerUrl() != null && !request.getBannerUrl().trim().isBlank()) {
-            promotion.setBannerUrl(request.getBannerUrl().trim());
-        }
-
-        if (request.getStartDate() != null) {
-            promotion.setStartDate(request.getStartDate());
-        }
-
-        if (request.getEndDate() != null) {
-            promotion.setEndDate(request.getEndDate());
-        }
+        promotion.setName(name);
+        promotion.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
+        promotion.setBannerUrl(request.getBannerUrl() != null ? request.getBannerUrl().trim() : null);
+        promotion.setStartDate(request.getStartDate());
+        promotion.setEndDate(request.getEndDate());
 
         if (request.getIsActive() != null) {
             promotion.setIsActive(request.getIsActive());
+        } else if (promotion.getIsActive() == null) {
+            promotion.setIsActive(true);
         }
 
-        Promotion savedPromotion = promotionRepository.save(promotion);
-        return responseMapper.toDto(savedPromotion);
+        Promotion saved = promotionRepository.save(promotion);
+        return responseMapper.toDto(saved);
     }
 
     @Override

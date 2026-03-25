@@ -30,47 +30,39 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Override
     public VoucherResponse saveVoucher(VoucherRequest requestBody) {
-        // Validate request body.
-        if (ObjectUtils.isEmpty(requestBody)) {
-            throw new IllegalArgumentException("Dữ liệu gửi lên không được để trống");
-        }
-
-        // Ensure voucher date range is valid.
-        if (requestBody.getStartDate() != null && requestBody.getEndDate() != null) {
-            if (!requestBody.getStartDate().isBefore(requestBody.getEndDate())) {
-                throw new IllegalArgumentException("Ngày bắt đầu phải nhỏ hơn ngày kết thúc");
-            }
+        if (requestBody.getStartDate() != null
+                && requestBody.getEndDate() != null
+                && !requestBody.getStartDate().isBefore(requestBody.getEndDate())) {
+            throw new IllegalArgumentException("Ngày bắt đầu phải nhỏ hơn ngày kết thúc");
         }
 
         Voucher voucher;
+        boolean isUpdate = requestBody.getId() != null;
 
-        if (!ObjectUtils.isEmpty(requestBody.getId())) {
-            // Update existing voucher.
+        if (isUpdate) {
             voucher = voucherRepository.findById(requestBody.getId())
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy voucher cần cập nhật"));
-
-            // Reject code if it belongs to another voucher.
-            voucherRepository.findByCode(requestBody.getCode())
-                    .ifPresent(existingVoucher -> {
-                        if (!existingVoucher.getId().equals(voucher.getId())) {
-                            throw new IllegalArgumentException("Mã voucher đã tồn tại");
-                        }
-                    });
         } else {
-            // Create new voucher with unique code.
-            if (voucherRepository.findByCode(requestBody.getCode()).isPresent()) {
-                throw new IllegalArgumentException("Mã voucher đã tồn tại");
-            }
             voucher = new Voucher();
         }
 
-        // Copy editable fields from request into entity.
-        BeanUtils.copyProperties(requestBody, voucher, "id");
+        String code = requestBody.getCode().trim();
 
-        // Default voucher status to active when missing.
-        if (ObjectUtils.isEmpty(voucher.getIsActive())) {
-            voucher.setIsActive(true);
-        }
+        voucherRepository.findByCode(code).ifPresent(existing -> {
+            if (!isUpdate || !existing.getId().equals(voucher.getId())) {
+                throw new IllegalArgumentException("Mã voucher đã tồn tại");
+            }
+        });
+
+        voucher.setCode(code);
+        voucher.setQuantityLimit(requestBody.getQuantityLimit());
+        voucher.setMinOrderValue(requestBody.getMinOrderValue());
+        voucher.setDescription(requestBody.getDescription() != null ? requestBody.getDescription().trim() : null);
+        voucher.setDiscountType(requestBody.getDiscountType());
+        voucher.setDiscountValue(requestBody.getDiscountValue());
+        voucher.setStartDate(requestBody.getStartDate());
+        voucher.setEndDate(requestBody.getEndDate());
+        voucher.setIsActive(requestBody.getIsActive() != null ? requestBody.getIsActive() : true);
 
         Voucher saved = voucherRepository.save(voucher);
         return responseMapper.toDto(saved);

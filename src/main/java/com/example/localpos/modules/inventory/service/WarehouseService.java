@@ -11,4 +11,5 @@ public interface WarehouseService {
     public WarehouseResponse updateWarehouse(WarehouseUpdateRequest warehouseCreateRequest, Long id);
     public PageResponse<WarehouseResponse> findWarehousesByName(String name, int page, int size);
     void deleteWarehouse(Long id);
+    WarehouseResponse restoreWarehouse(Long id);
 }
