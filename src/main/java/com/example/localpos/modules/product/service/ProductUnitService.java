@@ -1,5 +1,6 @@
 package com.example.localpos.modules.product.service;
 
+import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.modules.product.dto.request.ProductUnitCreateRequest;
 import com.example.localpos.modules.product.dto.request.ProductUnitUpdateRequest;
 import com.example.localpos.modules.product.dto.response.ProductUnitResponse;
@@ -11,7 +12,8 @@ public interface ProductUnitService {
 
     ProductUnitResponse updateProductUnit(Long id, ProductUnitUpdateRequest request);
 
-    List<ProductUnitResponse> getUnitsByProduct(Long productId);
+    PageResponse<ProductUnitResponse> getUnitsByProduct(Long productId, int page, int size);
+    List<ProductUnitResponse> searchUnitsByProductName(String productName);
 
     void deleteProductUnit(Long id);
     void restoreProductUnit(Long id);

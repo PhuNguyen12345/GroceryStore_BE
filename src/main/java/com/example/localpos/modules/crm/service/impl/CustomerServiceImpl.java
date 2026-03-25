@@ -25,46 +25,35 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerResponseMapper responseMapper;
 
-    @Override
-    public CustomerResponse saveCustomer(CustomerRequest requestBody) {
-        // Validate request body.
-        if (ObjectUtils.isEmpty(requestBody)) {
-            throw new IllegalArgumentException("Dữ liệu yêu cầu đang trống");
-        }
+@Override
+public CustomerResponse saveCustomer(CustomerRequest requestBody) {
+    Customer customer;
+    boolean isUpdate = requestBody.getId() != null;
 
-        Customer customer;
-
-        if (!ObjectUtils.isEmpty(requestBody.getId())) {
-            // Update existing customer.
-            customer = customerRepository.findById(requestBody.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khách hàng cần cập nhật"));
-
-            // Reject phone number if it belongs to another customer.
-            customerRepository.findByPhone(requestBody.getPhone())
-                    .ifPresent(existingCustomer -> {
-                        if (!existingCustomer.getId().equals(customer.getId())) {
-                            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
-                        }
-                    });
-        } else {
-            // Create new customer with unique phone number.
-            if (customerRepository.findByPhone(requestBody.getPhone()).isPresent()) {
-                throw new IllegalArgumentException("Số điện thoại đã tồn tại");
-            }
-            customer = new Customer();
-        }
-
-        // Copy editable fields from request into entity.
-        BeanUtils.copyProperties(requestBody, customer, "id");
-
-        // Default customer status to active when missing.
-        if (ObjectUtils.isEmpty(customer.getIsActive())) {
-            customer.setIsActive(true);
-        }
-
-        Customer saved = customerRepository.save(customer);
-        return responseMapper.toDto(saved);
+    if (isUpdate) {
+        customer = customerRepository.findById(requestBody.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khách hàng cần cập nhật"));
+    } else {
+        customer = new Customer();
+        customer.setIsActive(true);
     }
+
+    String phone = requestBody.getPhone().trim();
+
+    customerRepository.findByPhone(phone).ifPresent(existing -> {
+        if (!isUpdate || !existing.getId().equals(customer.getId())) {
+            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
+        }
+    });
+
+    customer.setPhone(phone);
+    customer.setFullName(requestBody.getFullName() != null ? requestBody.getFullName().trim() : null);
+    customer.setEmail(requestBody.getEmail() != null ? requestBody.getEmail().trim() : null);
+    customer.setAddress(requestBody.getAddress() != null ? requestBody.getAddress().trim() : null);
+
+    Customer saved = customerRepository.save(customer);
+    return responseMapper.toDto(saved);
+}
 
     @Override
     public CustomerResponse getById(Long id) {
