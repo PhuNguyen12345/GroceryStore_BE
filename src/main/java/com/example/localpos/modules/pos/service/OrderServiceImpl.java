@@ -1,9 +1,12 @@
 package com.example.localpos.modules.pos.service;
 
+import com.example.localpos.enums.DiscountType;
 import com.example.localpos.enums.OrderStatus;
 import com.example.localpos.enums.PaymentMethod;
 import com.example.localpos.enums.PaymentStatus;
+import com.example.localpos.modules.crm.entity.Voucher;
 import com.example.localpos.modules.crm.repository.CustomerRepository;
+import com.example.localpos.modules.crm.repository.VoucherRepository;
 import com.example.localpos.modules.hr.repository.EmployeeRepository;
 import com.example.localpos.modules.inventory.entity.InventoryBatch;
 import com.example.localpos.modules.inventory.repository.InventoryBatchRepository;
@@ -87,6 +90,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductUnitRepository productUnitRepository;
     private final InventoryBatchRepository inventoryBatchRepository;
     private final PaymentRepository paymentRepository;
+    private final VoucherRepository voucherRepository;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -193,9 +197,56 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Don hang trong, khong the thanh toan");
         }
 
-        PaymentMethod method = request.getPaymentMethod() != null ? request.getPaymentMethod() : PaymentMethod.CASH;
+        // 1. Recalculate base total
+        recalculateOrderFinancials(order);
+
+        BigDecimal total = order.getTotalAmount();
+
+        // 2. Apply voucher
+        BigDecimal voucherDiscount = applyVoucher(order, request.getVoucherId());
+
+        // 3. Apply loyalty points
+        BigDecimal pointsDiscount = applyLoyaltyPoints(order, request.getUsedPoints());
+
+        // 4. Final amount
+        BigDecimal finalAmount = total
+                .subtract(voucherDiscount)
+                .subtract(pointsDiscount);
+
+        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
+            finalAmount = BigDecimal.ZERO;
+        }
+
+        order.setDiscountAmount(voucherDiscount.add(pointsDiscount));
+        order.setFinalAmount(finalAmount);
+
+        // 5. Validate amountPaid
+        BigDecimal amountPaid = request.getAmountPaid() != null
+                ? request.getAmountPaid()
+                : BigDecimal.ZERO;
+
+        if (amountPaid.compareTo(finalAmount) < 0) {
+            throw new RuntimeException("Khach chua thanh toan du tien");
+        }
+
+        PaymentMethod method = request.getPaymentMethod() != null
+                ? request.getPaymentMethod()
+                : PaymentMethod.CASH;
+
+        // 6. Finalize order
         finalizeOrder(order, method);
-        upsertPayment(order, method, request.getAmountPaid(), "MANUAL-" + order.getOrderCode(), null, PaymentStatus.SUCCESS);
+        Voucher voucher = voucherRepository.findById(request.getVoucherId())
+                .orElseThrow(() -> new RuntimeException("Voucher khong ton tai"));
+        increaseVoucherUsage(voucher);
+
+        // 7. Save payment
+        upsertPayment(order, method, amountPaid,
+                "MANUAL-" + order.getOrderCode(),
+                null,
+                PaymentStatus.SUCCESS);
+
+        // 8. Reward points
+        rewardPoints(order);
 
         return order;
     }
@@ -345,6 +396,115 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findTop20ByStatusOrderByCreatedAtDesc(OrderStatus.PENDING);
     }
 
+    private BigDecimal applyLoyaltyPoints(Order order, Integer usedPoints) {
+        if (usedPoints == null || usedPoints <= 0) return BigDecimal.ZERO;
+
+        if (order.getCustomer() == null) {
+            throw new RuntimeException("Khong co khach hang de su dung points");
+        }
+
+        var customer = order.getCustomer();
+
+        if (customer.getLoyaltyPoints() < usedPoints) {
+            throw new RuntimeException("Khong du diem");
+        }
+
+        // 1 point = 1000đ (tuỳ bạn define)
+        BigDecimal discount = BigDecimal.valueOf(usedPoints * 1000);
+
+        // Trừ điểm
+        customer.setLoyaltyPoints(customer.getLoyaltyPoints() - usedPoints);
+        customerRepository.save(customer);
+
+        return discount;
+    }
+
+    private void rewardPoints(Order order) {
+        if (order.getCustomer() == null) return;
+
+        var customer = order.getCustomer();
+
+        BigDecimal finalAmount = order.getFinalAmount();
+
+        int earnedPoints = finalAmount
+                .divide(BigDecimal.valueOf(10000), java.math.RoundingMode.DOWN)
+                .intValue();
+
+        if (earnedPoints > 0) {
+            customer.setLoyaltyPoints(
+                    customer.getLoyaltyPoints() + earnedPoints
+            );
+            customerRepository.save(customer);
+        }
+    }
+
+    private BigDecimal applyVoucher(Order order, Long voucherId) {
+
+        if (voucherId == null) return BigDecimal.ZERO;
+
+        Voucher voucher = voucherRepository.findById(voucherId)
+                .orElseThrow(() -> new RuntimeException("Voucher khong ton tai"));
+
+        // ===== 1. ACTIVE =====
+        if (!Boolean.TRUE.equals(voucher.getIsActive())) {
+            throw new RuntimeException("Voucher khong hoat dong");
+        }
+
+        Instant now = Instant.now();
+
+        // ===== 2. DATE VALID =====
+        if (voucher.getStartDate() != null && now.isBefore(voucher.getStartDate())) {
+            throw new RuntimeException("Voucher chua bat dau");
+        }
+
+        if (voucher.getEndDate() != null && now.isAfter(voucher.getEndDate())) {
+            throw new RuntimeException("Voucher da het han");
+        }
+
+        // ===== 3. QUANTITY LIMIT =====
+        int used = voucher.getQuantityUsed() != null ? voucher.getQuantityUsed() : 0;
+        int limit = voucher.getQuantityLimit() != null ? voucher.getQuantityLimit() : Integer.MAX_VALUE;
+
+        if (used >= limit) {
+            throw new RuntimeException("Voucher da het luot su dung");
+        }
+
+        // ===== 4. MIN ORDER =====
+        BigDecimal total = order.getTotalAmount() != null
+                ? order.getTotalAmount()
+                : BigDecimal.ZERO;
+
+        if (voucher.getMinOrderValue() != null &&
+                total.compareTo(voucher.getMinOrderValue()) < 0) {
+            throw new RuntimeException("Don hang chua dat gia tri toi thieu");
+        }
+
+        // ===== 5. CALCULATE DISCOUNT =====
+        BigDecimal discount;
+
+        if (voucher.getDiscountType() == DiscountType.PERCENTAGE) {
+
+            discount = total.multiply(voucher.getDiscountValue())
+                    .divide(BigDecimal.valueOf(100), java.math.RoundingMode.HALF_UP);
+
+        } else {
+            discount = voucher.getDiscountValue();
+        }
+
+        // ===== 6. CLAMP =====
+        if (discount.compareTo(total) > 0) {
+            discount = total;
+        }
+
+        return discount;
+    }
+
+    private void increaseVoucherUsage(Voucher voucher) {
+        voucher.setQuantityUsed(
+                (voucher.getQuantityUsed() == null ? 0 : voucher.getQuantityUsed()) + 1
+        );
+        voucherRepository.save(voucher);
+    }
     private void deductInventory(ProductUnit unit, int quantityToDeduct) {
         List<InventoryBatch> batches = inventoryBatchRepository
                 .findByProductUnitAndQuantityAvailableGreaterThanOrderByCreatedAtAsc(unit, 0);
