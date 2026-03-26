@@ -133,6 +133,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/suppliers/**", "/api/v1/warehouses/**", "/api/v1/inventory/**")
                         .hasAnyRole("ADMIN", "STORE_MANAGER", "INVENTORY_STAFF")
 
+                        // Admin order management (ADMIN + STORE_MANAGER)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/pos/orders/admin")
+                        .hasAnyRole("ADMIN", "STORE_MANAGER")
+
                         // POS (ADMIN + STORE_MANAGER + CASHIER)
                         .requestMatchers("/api/v1/pos/orders/**")
                         .hasAnyRole("ADMIN", "STORE_MANAGER", "CASHIER")

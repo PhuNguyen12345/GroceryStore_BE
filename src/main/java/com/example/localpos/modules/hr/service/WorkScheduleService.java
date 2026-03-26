@@ -6,6 +6,7 @@ import com.example.localpos.modules.hr.dto.request.WorkScheduleUpdateDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -76,7 +77,9 @@ public interface WorkScheduleService {
     /**
      * Record check-out for a schedule entry.
      */
-    WorkScheduleResponseDTO checkOut(Long id, Instant checkOutTime);
+    WorkScheduleResponseDTO checkOut(Long id, Instant checkOutTime, BigDecimal closingCash);
+
+    WorkScheduleResponseDTO updateOpeningCash(Long id, BigDecimal openingCash);
 
     /**
      * Mark a schedule entry as present (isPresent = true).

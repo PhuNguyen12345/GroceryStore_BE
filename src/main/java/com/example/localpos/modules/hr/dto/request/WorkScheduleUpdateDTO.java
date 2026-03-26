@@ -3,6 +3,7 @@ package com.example.localpos.modules.hr.dto.request;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -21,4 +22,8 @@ public class WorkScheduleUpdateDTO {
     private Instant checkInTime;
 
     private Instant checkOutTime;
+
+    private BigDecimal openingCash;
+
+    private BigDecimal closingCash;
 }

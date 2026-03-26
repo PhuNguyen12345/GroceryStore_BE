@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -42,6 +43,12 @@ public class WorkSchedule {
 
     @Column(name = "check_out_time")
     private Instant checkOutTime;
+
+    @Column(name = "opening_cash", precision = 15, scale = 2)
+    private BigDecimal openingCash;
+
+    @Column(name = "closing_cash", precision = 15, scale = 2)
+    private BigDecimal closingCash;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")

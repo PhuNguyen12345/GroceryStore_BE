@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -31,5 +32,8 @@ public class WorkScheduleResponseDTO {
     private Boolean isPresent;
     private Instant checkInTime;
     private Instant checkOutTime;
+    private BigDecimal openingCash;
+    private BigDecimal closingCash;
+    private BigDecimal cashDifference;
     private Instant createdAt;
 }

@@ -3,6 +3,7 @@ package com.example.localpos.modules.pos.service;
 import com.example.localpos.enums.OrderStatus;
 import com.example.localpos.enums.PaymentMethod;
 import com.example.localpos.enums.PaymentStatus;
+import com.example.localpos.common.response.PageResponse;
 import com.example.localpos.modules.crm.repository.CustomerRepository;
 import com.example.localpos.modules.hr.repository.EmployeeRepository;
 import com.example.localpos.modules.inventory.entity.InventoryBatch;
@@ -10,6 +11,7 @@ import com.example.localpos.modules.inventory.repository.InventoryBatchRepositor
 import com.example.localpos.modules.pos.dto.request.CartItemRequest;
 import com.example.localpos.modules.pos.dto.request.CheckoutRequest;
 import com.example.localpos.modules.pos.dto.request.OrderRequest;
+import com.example.localpos.modules.pos.dto.response.OrderAdminResponse;
 import com.example.localpos.modules.pos.dto.response.QrCheckoutResponse;
 import com.example.localpos.modules.pos.entity.Order;
 import com.example.localpos.modules.pos.entity.OrderDetail;
@@ -29,6 +31,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +49,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.UUID;
 
 @Service
@@ -255,7 +260,11 @@ public class OrderServiceImpl implements OrderService {
                     .build();
         }
 
-        upsertPayment(order, PaymentMethod.QR_CODE, amount, null, toJsonSafely(qrResponse), PaymentStatus.PENDING);
+        String pendingTransactionRef = null;
+        if ("PAYOS".equalsIgnoreCase(safeText(qrResponse.getProvider())) && qrResponse.getProviderOrderCode() != null) {
+            pendingTransactionRef = "PAYOS-ORDERCODE-" + qrResponse.getProviderOrderCode();
+        }
+        upsertPayment(order, PaymentMethod.QR_CODE, amount, pendingTransactionRef, toJsonSafely(qrResponse), PaymentStatus.PENDING);
 
         return qrResponse;
     }
@@ -307,7 +316,8 @@ public class OrderServiceImpl implements OrderService {
             headers.set("x-client-id", payOsClientId.trim());
             headers.set("x-api-key", payOsApiKey.trim());
 
-            String url = safeText(payOsApiUrl).replaceAll("/+$", "") + "/v2/payment-requests/" + orderId;
+            long payOsOrderCode = resolvePayOsOrderCodeForSync(orderId);
+            String url = safeText(payOsApiUrl).replaceAll("/+$", "") + "/v2/payment-requests/" + payOsOrderCode;
             ResponseEntity<JsonNode> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
@@ -331,7 +341,7 @@ public class OrderServiceImpl implements OrderService {
                     : order.getFinalAmount();
             String paymentRef = safeText(data.path("reference").asText());
             if (paymentRef.isEmpty()) {
-                paymentRef = "PAYOS-SYNC-" + orderId;
+                paymentRef = "PAYOS-SYNC-" + payOsOrderCode;
             }
 
             return confirmQrPayment(order.getId(), paidAmount, paymentRef, body.toString());
@@ -343,6 +353,31 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<Order> getPendingOrders() {
         return orderRepository.findTop20ByStatusOrderByCreatedAtDesc(OrderStatus.PENDING);
+    }
+
+    @Override
+    public PageResponse<OrderAdminResponse> searchOrdersForAdmin(
+            Instant fromTime,
+            Instant toTime,
+            OrderStatus status,
+            String orderCode,
+            Pageable pageable
+    ) {
+        Page<OrderAdminResponse> page = orderRepository.searchOrdersForAdmin(
+                fromTime,
+                toTime,
+                status,
+                orderCode,
+                pageable
+        );
+
+        return PageResponse.<OrderAdminResponse>builder()
+                .content(page.getContent())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .build();
     }
 
     private void deductInventory(ProductUnit unit, int quantityToDeduct) {
@@ -440,9 +475,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private QrCheckoutResponse createPayOsPayment(Order order, BigDecimal amount) {
-        long payOsOrderCode = order.getId();
+        long payOsOrderCode = generatePayOsOrderCode(order.getId());
         int amountInt = amount.setScale(0, java.math.RoundingMode.HALF_UP).intValueExact();
-        String description = "TT " + order.getOrderCode();
+        String description = buildPayOsDescription(order.getId());
         String returnUrl = appendQueryParam(
                 appendQueryParam(payOsReturnUrl, "provider", "payos"),
                 "orderId",
@@ -481,11 +516,35 @@ public class OrderServiceImpl implements OrderService {
             );
         } catch (HttpClientErrorException.TooManyRequests e) {
             throw new RuntimeException("PayOS dang gioi han tan suat. Vui long thu lai sau it giay.");
+        } catch (HttpClientErrorException e) {
+            String payOsCode = parsePayOsCode(e.getResponseBodyAsString());
+            if ("231".equals(payOsCode)) {
+                QrCheckoutResponse existingPayment = fetchExistingPayOsPayment(order, amount);
+                if (existingPayment != null) {
+                    return existingPayment;
+                }
+            }
+            throw new RuntimeException(extractPayOsErrorMessage(e));
         }
 
         JsonNode body = response.getBody();
-        if (body == null || !"00".equals(body.path("code").asText())) {
-            throw new RuntimeException("Tao link PayOS that bai");
+        if (body == null) {
+            throw new RuntimeException("Tao link PayOS that bai: response rong");
+        }
+
+        String payOsCode = safeText(body.path("code").asText());
+        if (!"00".equals(payOsCode)) {
+            if ("231".equals(payOsCode)) {
+                QrCheckoutResponse existingPayment = fetchExistingPayOsPayment(order, amount);
+                if (existingPayment != null) {
+                    return existingPayment;
+                }
+            }
+            String payOsDesc = safeText(body.path("desc").asText());
+            if (!payOsDesc.isEmpty()) {
+                throw new RuntimeException("PayOS error " + payOsCode + ": " + payOsDesc);
+            }
+            throw new RuntimeException("PayOS error code: " + payOsCode);
         }
 
         JsonNode data = body.path("data");
@@ -499,6 +558,7 @@ public class OrderServiceImpl implements OrderService {
         return QrCheckoutResponse.builder()
                 .orderId(order.getId())
                 .orderCode(order.getOrderCode())
+                .providerOrderCode(payOsOrderCode)
                 .amount(amount)
                 .qrUrl(qrUrl)
                 .qrCode(qrCode)
@@ -520,6 +580,162 @@ public class OrderServiceImpl implements OrderService {
 
     private String safeText(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String parsePayOsCode(String body) {
+        if (body == null || body.isBlank()) {
+            return "";
+        }
+        try {
+            JsonNode node = objectMapper.readTree(body);
+            return safeText(node.path("code").asText());
+        } catch (JsonProcessingException ignored) {
+            return "";
+        }
+    }
+
+    private QrCheckoutResponse fetchExistingPayOsPayment(Order order, BigDecimal expectedAmount) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("x-client-id", payOsClientId.trim());
+            headers.set("x-api-key", payOsApiKey.trim());
+
+            long payOsOrderCode = resolvePayOsOrderCodeForSync(order.getId());
+            String url = safeText(payOsApiUrl).replaceAll("/+$", "") + "/v2/payment-requests/" + payOsOrderCode;
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    JsonNode.class
+            );
+
+            JsonNode body = response.getBody();
+            if (body == null || !"00".equals(safeText(body.path("code").asText()))) {
+                return null;
+            }
+
+            JsonNode data = body.path("data");
+            String checkoutUrl = safeText(data.path("checkoutUrl").asText());
+            String qrCode = safeText(data.path("qrCode").asText());
+            if (checkoutUrl.isEmpty() && qrCode.isEmpty()) {
+                return null;
+            }
+
+            BigDecimal amount = data.path("amount").isNumber()
+                    ? data.path("amount").decimalValue()
+                    : expectedAmount;
+            if (amount.compareTo(expectedAmount) != 0) {
+                return null;
+            }
+
+            String qrUrl = qrCode.isEmpty()
+                    ? ""
+                    : "https://api.qrserver.com/v1/create-qr-code/?size=320x320&data="
+                    + URLEncoder.encode(qrCode, StandardCharsets.UTF_8);
+
+            return QrCheckoutResponse.builder()
+                    .orderId(order.getId())
+                    .orderCode(order.getOrderCode())
+                    .providerOrderCode(payOsOrderCode)
+                    .amount(expectedAmount)
+                    .qrUrl(qrUrl)
+                    .qrCode(qrCode)
+                    .checkoutUrl(checkoutUrl)
+                    .provider("PAYOS")
+                    .build();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private String buildPayOsDescription(Long orderId) {
+        String value = "DH" + (orderId != null ? orderId : 0L);
+        // PayOS note: some linked bank flows only accept up to 9 chars in description.
+        if (value.length() <= 9) {
+            return value;
+        }
+        return value.substring(value.length() - 9);
+    }
+
+    private String extractPayOsErrorMessage(HttpClientErrorException e) {
+        String fallback = "Tao link PayOS that bai";
+        String body = e.getResponseBodyAsString();
+        if (body == null || body.isBlank()) {
+            return fallback + " (" + e.getStatusCode().value() + ")";
+        }
+
+        try {
+            JsonNode node = objectMapper.readTree(body);
+            String code = safeText(node.path("code").asText());
+            String desc = safeText(node.path("desc").asText());
+
+            if (!desc.isEmpty() && !code.isEmpty()) {
+                return "PayOS error " + code + ": " + desc;
+            }
+            if (!desc.isEmpty()) {
+                return "PayOS: " + desc;
+            }
+            if (!code.isEmpty()) {
+                return "PayOS error code: " + code;
+            }
+        } catch (JsonProcessingException ignored) {
+            // Keep fallback below if body is not JSON.
+        }
+
+        return fallback + ": " + body;
+    }
+
+    private long generatePayOsOrderCode(Long orderId) {
+        long now = System.currentTimeMillis();
+        long randomPart = ThreadLocalRandom.current().nextInt(100, 1000);
+        long orderPart = Math.abs(orderId != null ? orderId : 0L) % 100;
+        return now * 1000 + randomPart + orderPart;
+    }
+
+    private long resolvePayOsOrderCodeForSync(Long orderId) {
+        Payment pending = paymentRepository
+                .findTopByOrder_IdAndPaymentMethodAndStatusOrderByCreatedAtDesc(
+                        orderId,
+                        PaymentMethod.QR_CODE,
+                        PaymentStatus.PENDING
+                )
+                .orElse(null);
+
+        if (pending == null) {
+            return orderId;
+        }
+
+        long fromRef = parsePayOsOrderCodeFromRef(pending.getTransactionRef());
+        if (fromRef > 0) {
+            return fromRef;
+        }
+
+        String payload = pending.getPaymentPayload();
+        if (payload != null && !payload.isBlank()) {
+            try {
+                JsonNode node = objectMapper.readTree(payload);
+                if (node.path("providerOrderCode").isNumber()) {
+                    return node.path("providerOrderCode").asLong();
+                }
+            } catch (JsonProcessingException ignored) {
+                // Fallback below.
+            }
+        }
+
+        return orderId;
+    }
+
+    private long parsePayOsOrderCodeFromRef(String transactionRef) {
+        String ref = safeText(transactionRef);
+        String prefix = "PAYOS-ORDERCODE-";
+        if (!ref.startsWith(prefix)) {
+            return -1;
+        }
+        try {
+            return Long.parseLong(ref.substring(prefix.length()));
+        } catch (NumberFormatException ignored) {
+            return -1;
+        }
     }
 
     private String appendQueryParam(String baseUrl, String key, String value) {
@@ -553,6 +769,9 @@ public class OrderServiceImpl implements OrderService {
             String checkoutUrl = safeText(node.path("checkoutUrl").asText());
             String qrCode = safeText(node.path("qrCode").asText());
             String qrUrl = safeText(node.path("qrUrl").asText());
+            Long providerOrderCode = node.path("providerOrderCode").isNumber()
+                    ? node.path("providerOrderCode").asLong()
+                    : null;
             BigDecimal payloadAmount = node.path("amount").isNumber() ? node.path("amount").decimalValue() : amount;
 
             if (!"PAYOS".equalsIgnoreCase(provider) || checkoutUrl.isEmpty()) {
@@ -565,6 +784,7 @@ public class OrderServiceImpl implements OrderService {
             return QrCheckoutResponse.builder()
                     .orderId(order.getId())
                     .orderCode(order.getOrderCode())
+                    .providerOrderCode(providerOrderCode)
                     .amount(amount)
                     .qrUrl(qrUrl)
                     .qrCode(qrCode)
