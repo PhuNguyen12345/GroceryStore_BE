@@ -296,7 +296,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public QrCheckoutResponse createQrForOrder(Long orderId) {
+    public QrCheckoutResponse createQrForOrder(Long orderId, CheckoutRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Khong tim thay don hang"));
 
@@ -309,21 +309,39 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Don hang trong, khong the tao ma QR");
         }
 
-        BigDecimal totalFromDetails = details.stream()
-                .map(OrderDetail::getSubtotal)
-                .filter(v -> v != null)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        recalculateOrderFinancials(order);
+        BigDecimal total = order.getTotalAmount();
+        
+        BigDecimal voucherDiscount = BigDecimal.ZERO;
+        BigDecimal pointsDiscount = BigDecimal.ZERO;
 
-        BigDecimal discount = order.getDiscountAmount() != null ? order.getDiscountAmount() : BigDecimal.ZERO;
-        BigDecimal amount = totalFromDetails.subtract(discount);
+        if (request != null) {
+            voucherDiscount = applyVoucher(order, request.getVoucherId());
+            if (request.getCustomerId() != null) {
+                Customer customer = customerRepository.findById(request.getCustomerId()).orElse(null);
+                if (customer != null) {
+                    order.setCustomer(customer);
+                }
+            }
+            if (request.getUsedPoints() != null) {
+                pointsDiscount = applyPoints(order, request.getUsedPoints());
+            }
+        }
 
-        order.setTotalAmount(totalFromDetails);
-        order.setFinalAmount(amount);
+        BigDecimal finalAmount = total.subtract(voucherDiscount).subtract(pointsDiscount);
+        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
+            finalAmount = BigDecimal.ZERO;
+        }
+
+        order.setDiscountAmount(voucherDiscount.add(pointsDiscount));
+        order.setFinalAmount(finalAmount);
         orderRepository.save(order);
 
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+        if (finalAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("So tien thanh toan khong hop le");
         }
+
+        BigDecimal amount = finalAmount;
 
         QrCheckoutResponse qrResponse;
         if (isPayOsReady()) {

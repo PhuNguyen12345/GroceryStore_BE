@@ -69,8 +69,10 @@ public class OrderController {
     }
 
     @PostMapping("/{id}/create-qr")
-    public ResponseEntity<QrCheckoutResponse> createQr(@PathVariable Long id) {
-        QrCheckoutResponse response = orderService.createQrForOrder(id);
+    public ResponseEntity<QrCheckoutResponse> createQr(
+            @PathVariable Long id,
+            @RequestBody(required = false) CheckoutRequest request) {
+        QrCheckoutResponse response = orderService.createQrForOrder(id, request);
         return ResponseEntity.ok(response);
     }
 

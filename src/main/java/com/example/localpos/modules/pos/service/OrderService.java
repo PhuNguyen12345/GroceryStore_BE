@@ -22,7 +22,7 @@ public interface OrderService {
 
     Order checkout(Long orderId, CheckoutRequest request);
 
-    QrCheckoutResponse createQrForOrder(Long orderId);
+    QrCheckoutResponse createQrForOrder(Long orderId, CheckoutRequest request);
 
     Order confirmQrPayment(Long orderId, BigDecimal amountPaid, String transactionRef, String rawPayload);
 
