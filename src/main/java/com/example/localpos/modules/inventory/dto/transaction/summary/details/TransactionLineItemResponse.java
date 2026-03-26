@@ -12,10 +12,9 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @Builder
 public class TransactionLineItemResponse {
-    // Chỉ lấy những thông tin thiết yếu nhất để người dùng đọc hiểu
-    private String productName;  // Nối từ Batch -> ProductUnit -> Product
-    private String unitName;     // Nối từ Batch -> ProductUnit
-    private String batchCode;    // Mã lô hàng thực tế
-    private Integer quantity;    // Số lượng nhập/xuất
-    private BigDecimal price;    // Giá nhập (từ Batch)
+    private String productName;
+    private String unitName;
+    private String batchCode;
+    private Integer quantity;
+    private BigDecimal price;
 }

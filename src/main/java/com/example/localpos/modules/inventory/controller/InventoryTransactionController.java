@@ -69,7 +69,7 @@ public class InventoryTransactionController {
         return ResponseEntity.ok(response);
     }
 
-    // API 2: Lấy chi tiết 1 phiếu (Bao gồm danh sách mặt hàng)
+    // Fetch details
     @GetMapping("/{id}")
     public ResponseEntity<TransactionDetailResponse> getTransactionById(@PathVariable Long id) {
         TransactionDetailResponse response = inventoryTransactionService.getTransactionDetailById(id);

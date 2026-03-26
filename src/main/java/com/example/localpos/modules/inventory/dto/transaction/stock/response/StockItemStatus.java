@@ -3,7 +3,6 @@ package com.example.localpos.modules.inventory.dto.transaction.stock.response;
 import lombok.Builder;
 import lombok.Data;
 
-// Đổi tên thành ItemStatus cho ngắn gọn vì đã nằm trong CheckStockResponse
 @Data
 @Builder
 public class StockItemStatus {

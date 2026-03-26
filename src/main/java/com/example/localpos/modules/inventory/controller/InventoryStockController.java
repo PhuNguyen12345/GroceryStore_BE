@@ -24,9 +24,7 @@ public class InventoryStockController {
     @GetMapping("/{productUnitId}")
     public ResponseEntity<Integer> getAvailableStock(
             @PathVariable Long productUnitId,
-            @RequestParam Long warehouseId) { // Truyền ID kho cửa hàng đang xem
-
-        // Gọi lại đúng cái hàm tính tổng bằng lệnh COALESCE ở Repository
+            @RequestParam Long warehouseId) {
         Integer available = stockService.getAvailableStockByUnit(warehouseId, productUnitId);
         return ResponseEntity.ok(available);
     }

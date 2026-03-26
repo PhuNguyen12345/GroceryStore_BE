@@ -444,6 +444,10 @@ public class OrderServiceImpl implements OrderService {
             JsonNode data = body.path("data");
             String status = safeText(data.path("status").asText()).toUpperCase();
             if (!"PAID".equals(status)) {
+                if (("CANCELLED".equals(status) || "EXPIRED".equals(status)) && pending != null) {
+                    pending.setStatus(PaymentStatus.FAILED);
+                    paymentRepository.save(pending);
+                }
                 return order;
             }
 
