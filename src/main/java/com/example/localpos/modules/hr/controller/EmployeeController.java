@@ -3,6 +3,7 @@ package com.example.localpos.modules.hr.controller;
 import com.example.localpos.common.constants.ApiPaths;
 import com.example.localpos.enums.EmployeeRole;
 import com.example.localpos.modules.hr.dto.request.EmployeeRequestDTO;
+import com.example.localpos.modules.hr.dto.request.ResetPasswordRequest;
 import com.example.localpos.modules.hr.dto.response.EmployeeResponseDTO;
 import com.example.localpos.modules.hr.dto.request.EmployeeUpdateDTO;
 import com.example.localpos.modules.hr.service.EmployeeService;
@@ -118,5 +119,15 @@ public class EmployeeController {
                 "totalActive", totalActive,
                 "countByRole", byRole
         ));
+    }
+
+    @PatchMapping("/{id}/reset-password")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> resetPassword(
+            @PathVariable Long id,
+            @RequestBody @Valid ResetPasswordRequest req
+    ) {
+        employeeService.resetPassword(id, req.newPassword());
+        return ResponseEntity.ok().build();
     }
 }

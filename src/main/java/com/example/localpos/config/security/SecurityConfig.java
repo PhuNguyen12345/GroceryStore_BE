@@ -86,6 +86,7 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers(
                                 new AntPathRequestMatcher("/api/v1/auth/login"),
+                                new AntPathRequestMatcher("/api/v1/auth/forgot-password/**"),
                                 new AntPathRequestMatcher("/uploads/images/**"),
                                 new AntPathRequestMatcher("/v3/api-docs/**"),
                                 new AntPathRequestMatcher("/swagger-ui/**"),

@@ -205,4 +205,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.countByIsActive(true);
     }
 
+    @Override
+    // ADMIN manually sets a new password after identifying the employee
+    public void resetPassword(Long employeeId, String newPassword) {
+        Employee emp = getEmployeeOrThrow(employeeId);
+        emp.setPasswordHash(passwordEncoder.encode(newPassword));
+        employeeRepository.save(emp);
+    }
+
 }

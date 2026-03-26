@@ -50,4 +50,6 @@ public interface EmployeeService {
     long countByRole(EmployeeRole role);
 
     long countActive();
+
+    void resetPassword(Long employeeId, String newPassword);
 }
