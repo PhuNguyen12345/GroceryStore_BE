@@ -20,7 +20,5 @@ public class TransactionDetailResponse {
     private String employeeName;
     private Instant createdAt;
     private String note;
-
-    // ĐÂY LÀ ĐIỂM ĂN TIỀN: Danh sách các mặt hàng nằm gọn trong phiếu
     private List<TransactionLineItemResponse> items;
 }

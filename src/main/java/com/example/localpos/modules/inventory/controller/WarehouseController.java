@@ -47,7 +47,7 @@ public class WarehouseController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteWarehouse(@PathVariable Long id) {
         warehouseService.deleteWarehouse(id);
-        return ResponseEntity.ok("Da ngung kho voi id: " + id);
+        return ResponseEntity.ok("Đã ngừng kho với id: " + id);
     }
 
     @PutMapping("/{id}/restore")
