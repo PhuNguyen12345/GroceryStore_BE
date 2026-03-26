@@ -20,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -255,12 +256,53 @@ public class WorkScheduleController {
     @PatchMapping("/{id}/check-out")
     public ResponseEntity<WorkScheduleResponseDTO> checkOut(
             @PathVariable Long id,
-            @RequestBody Map<String, Instant> body) {
-        Instant checkOutTime = body.get("checkOutTime");
-        if (checkOutTime == null) {
+            @RequestBody Map<String, Object> body) {
+        Instant checkOutTime = Instant.now();
+        Object checkOutTimeRaw = body.get("checkOutTime");
+        if (checkOutTimeRaw != null) {
+            try {
+                checkOutTime = Instant.parse(String.valueOf(checkOutTimeRaw));
+            } catch (Exception ex) {
+                return ResponseEntity.badRequest().build();
+            }
+        }
+
+        Object closingCashRaw = body.get("closingCash");
+        if (closingCashRaw == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(workScheduleService.checkOut(id, checkOutTime));
+
+        BigDecimal closingCash;
+        try {
+            closingCash = new BigDecimal(String.valueOf(closingCashRaw));
+        } catch (NumberFormatException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(workScheduleService.checkOut(id, checkOutTime, closingCash));
+    }
+
+    /**
+     * PATCH /api/v1/work-schedules/{id}/opening-cash
+     * Body: { "openingCash": 1000000 }
+     */
+    @PatchMapping("/{id}/opening-cash")
+    public ResponseEntity<WorkScheduleResponseDTO> updateOpeningCash(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        Object openingCashRaw = body.get("openingCash");
+        if (openingCashRaw == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        BigDecimal openingCash;
+        try {
+            openingCash = new BigDecimal(String.valueOf(openingCashRaw));
+        } catch (NumberFormatException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(workScheduleService.updateOpeningCash(id, openingCash));
     }
 
     /**

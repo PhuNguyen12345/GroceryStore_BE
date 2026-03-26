@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -34,6 +35,13 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
     // Mapping
 
     private WorkScheduleResponseDTO toDTO(WorkSchedule ws) {
+        BigDecimal openingCash = ws.getOpeningCash();
+        BigDecimal closingCash = ws.getClosingCash();
+        BigDecimal cashDifference = null;
+        if (openingCash != null && closingCash != null) {
+            cashDifference = closingCash.subtract(openingCash);
+        }
+
         return WorkScheduleResponseDTO.builder()
                 .id(ws.getId())
                 .employeeId(ws.getEmployee().getId())
@@ -45,6 +53,9 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
                 .isPresent(ws.getIsPresent())
                 .checkInTime(ws.getCheckInTime())
                 .checkOutTime(ws.getCheckOutTime())
+                .openingCash(openingCash)
+                .closingCash(closingCash)
+                .cashDifference(cashDifference)
                 .createdAt(ws.getCreatedAt())
                 .build();
     }
@@ -77,6 +88,12 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
         }
     }
 
+    private void validateCashNotNegative(BigDecimal amount, String fieldName) {
+        if (amount != null && amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(fieldName + " must not be negative");
+        }
+    }
+
     // CRUD
 
     @Override
@@ -96,6 +113,8 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
         ws.setShift(shift);
         ws.setWorkDate(request.getWorkDate());
         ws.setIsPresent(request.getIsPresent() != null ? request.getIsPresent() : false);
+        validateCashNotNegative(request.getOpeningCash(), "Opening cash");
+        ws.setOpeningCash(request.getOpeningCash());
         ws.setCreatedAt(Instant.now());
 
         return toDTO(workScheduleRepository.save(ws));
@@ -150,6 +169,16 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
         if (request.getCheckOutTime() != null) {
             validateCheckTimes(ws.getCheckInTime(), request.getCheckOutTime());
             ws.setCheckOutTime(request.getCheckOutTime());
+        }
+
+        if (request.getOpeningCash() != null) {
+            validateCashNotNegative(request.getOpeningCash(), "Opening cash");
+            ws.setOpeningCash(request.getOpeningCash());
+        }
+
+        if (request.getClosingCash() != null) {
+            validateCashNotNegative(request.getClosingCash(), "Closing cash");
+            ws.setClosingCash(request.getClosingCash());
         }
 
         return toDTO(workScheduleRepository.save(ws));
@@ -272,10 +301,30 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
 
     @Override
     @Transactional
-    public WorkScheduleResponseDTO checkOut(Long id, Instant checkOutTime) {
+    public WorkScheduleResponseDTO checkOut(Long id, Instant checkOutTime, BigDecimal closingCash) {
         WorkSchedule ws = getScheduleOrThrow(id);
+        if (closingCash == null) {
+            throw new IllegalArgumentException("Closing cash is required when checking out");
+        }
+        validateCashNotNegative(closingCash, "Closing cash");
+        if (ws.getCheckInTime() == null) {
+            throw new IllegalArgumentException("Cannot check out before check-in");
+        }
         validateCheckTimes(ws.getCheckInTime(), checkOutTime);
         ws.setCheckOutTime(checkOutTime);
+        ws.setClosingCash(closingCash);
+        return toDTO(workScheduleRepository.save(ws));
+    }
+
+    @Override
+    @Transactional
+    public WorkScheduleResponseDTO updateOpeningCash(Long id, BigDecimal openingCash) {
+        WorkSchedule ws = getScheduleOrThrow(id);
+        if (openingCash == null) {
+            throw new IllegalArgumentException("Opening cash is required");
+        }
+        validateCashNotNegative(openingCash, "Opening cash");
+        ws.setOpeningCash(openingCash);
         return toDTO(workScheduleRepository.save(ws));
     }
 

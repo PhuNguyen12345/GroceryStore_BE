@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 public class QrCheckoutResponse {
     private Long orderId;
     private String orderCode;
+    private Long providerOrderCode;
     private BigDecimal amount;
     private String qrUrl;
     private String qrCode;
